@@ -1,4 +1,4 @@
-use eyre::{Result, WrapErr};
+use eyre::{Result};
 
 #[allow(unused_imports)]
 use raalog::{debug, error, info, trace, warn};
@@ -12,7 +12,7 @@ static LOG_FILE: &str = "rust_debug.log";
 fn main() -> Result<()> {
     log_init();
 
-    let mut app = App::new().wrap_err("invoking App::new() in main")?;
+    let mut app = App::new();
     let status = app.run(runner::execute);
     drop(app);
 

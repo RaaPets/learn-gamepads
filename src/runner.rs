@@ -1,20 +1,35 @@
 use eyre::{Result, WrapErr};
 #[allow(unused_imports)]
 use raalog::{debug, error, info, trace, warn};
-use gamepads::{Gamepads, Button};
 
-use app_raa_tui::App;
+mod action;
+use action::Action;
+mod updater;
+use updater::update;
 
-static TICK: std::time::Duration = std::time::Duration::from_millis(10);
+//  //  //  //  //  //  //  //
+#[derive(Debug, PartialEq)]
+enum AppState {
+    Working,
+    Exiting,
+}
+impl AppState {
+    fn is_exiting(&self) -> bool {
+        *self == Self::Exiting
+    }
+}
+
+static TICK: std::time::Duration = std::time::Duration::from_millis(300);
 
 //  //  //  //  //  //  //  //
 pub fn execute(
-    app: &mut App,
     terminal: &mut ratatui::Terminal<ratatui::prelude::CrosstermBackend<std::io::Stdout>>,
 ) -> Result<()> {
     trace!("runner::execute()..");
+    let mut app = AppState::Working;
+
     let handler = event_handler::EventHandler::new(TICK);
-    let mut gamepads = Gamepads::new();
+    let mut gamepad_handler = gamepad_handler::GamepadHandler::new();
 
     while !app.is_exiting() {
         // DRAW
@@ -22,39 +37,37 @@ pub fn execute(
 
         // UPDATE
         //      get inputs
-        gamepads.poll();
-        for gamepad in gamepads.all() {
-            if gamepad.id().value() == 0 {
-                for button in gamepad.all_just_pressed() {
-                    match button {
-                        Button::DPadUp => println!("{:?}", button),
-                        Button::DPadDown => println!("{:?}", button),
-                        Button::DPadLeft => println!("{:?}", button),
-                        Button::DPadRight => println!("{:?}", button),
-                        _ => { 
-                            println!("other -> {:?}", button);
-                        }
-                    }
-                }
-            }
-        }
         let raw_input = handler
             .wait_next()
             .wrap_err("handler.wait_next() in runner::execute()")?;
         //      process inputs
         match raw_input {
             event_handler::Events::Input(raw_event) => {
-                //invoke_update_loop(Action::TranslateRawEvent(raw_event), &mut app)?;
+                invoke_update_loop(Action::TranslateRawEvent(raw_event), &mut app)?;
             }
             event_handler::Events::Tick => {
-                //invoke_update_loop(Action::Tick, &mut app)?;
+                gamepad_handler.update();
+                if let Some(main_gamepad) = gamepad_handler.get_gamepad(0) {
+                    invoke_update_loop(Action::ProcessMainGamepadInput(main_gamepad), &mut app)?;
+                }
+                invoke_update_loop(Action::Tick, &mut app)?;
             }
             event_handler::Events::Exit => {
-                //invoke_update_loop(Action::Quit, &mut app)?;
-                app.set_exiting();
+                app = AppState::Exiting;
+                invoke_update_loop(Action::Quit, &mut app)?;
             }
         }
     }
     trace!("normal exit");
     Ok(())
 }
+
+//  //  //  //  //  //  //  //
+fn invoke_update_loop(first_action: Action, app_state: &mut AppState) -> Result<()> {
+    let mut current_action = first_action;
+    while  if let Action::Noop = current_action {false} else {true} {
+        current_action = update(app_state, &current_action)?;
+    }
+    Ok(())
+}
+
