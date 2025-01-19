@@ -1,0 +1,29 @@
+[package]
+name = "learn-gamepads"
+version = "0.1.0"
+edition = "2021"
+authors=["AlexanderARodin"]
+
+##  ##  ##  ##  ##  ##  ##  ##
+[dependencies]
+eyre.workspace = true
+raalog.workspace = true
+ratatui.workspace = true
+gamepads.workspace = true
+
+app_raa_tui = { path = "crates/app_raa_tui" }
+event_handler = { path = "crates/event_handler" }
+
+##  ##  ##  ##  ##  ##  ##  ##
+[workspace]
+resolver = "2"
+members = [
+	"crates/event_handler",
+	"crates/app_raa_tui",
+]
+
+[workspace.dependencies]
+eyre = "0.6.12"
+ratatui = "0.29.0"
+gamepads = "0.1.6"
+raalog = { git = "https://github.com/AlexanderARodin/raalog.git", branch = "main" }
