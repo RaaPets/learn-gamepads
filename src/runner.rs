@@ -5,19 +5,10 @@ use raalog::{debug, error, info, trace, warn};
 mod action;
 use action::Action;
 mod updater;
-use updater::update;
+mod viewer;
 
-//  //  //  //  //  //  //  //
-#[derive(Debug, PartialEq)]
-enum AppState {
-    Working,
-    Exiting,
-}
-impl AppState {
-    fn is_exiting(&self) -> bool {
-        *self == Self::Exiting
-    }
-}
+mod app_state;
+use app_state::AppState;
 
 static TICK: std::time::Duration = std::time::Duration::from_millis(300);
 
@@ -26,14 +17,14 @@ pub fn execute(
     terminal: &mut ratatui::Terminal<ratatui::prelude::CrosstermBackend<std::io::Stdout>>,
 ) -> Result<()> {
     trace!("runner::execute()..");
-    let mut app = AppState::Working;
+    let mut app = AppState::JustInited;
 
     let handler = event_handler::EventHandler::new(TICK);
     let mut gamepad_handler = gamepad_handler::GamepadHandler::new();
 
     while !app.is_exiting() {
         // DRAW
-        //terminal.draw(|frame| viewer::view(&mut app, frame.area(), frame.buffer_mut()))?;
+        terminal.draw(|frame| viewer::view(&mut app, frame.area(), frame.buffer_mut()))?;
 
         // UPDATE
         //      get inputs
@@ -47,9 +38,9 @@ pub fn execute(
             }
             event_handler::Events::Tick => {
                 gamepad_handler.update();
-                if let Some(main_gamepad) = gamepad_handler.get_gamepad(0) {
-                    invoke_update_loop(Action::ProcessMainGamepadInput(main_gamepad), &mut app)?;
-                }
+                let main_gamepad = gamepad_handler.get_gamepad(0);
+                invoke_update_loop(Action::ProcessMainGamepadInput(main_gamepad), &mut app)?;
+
                 invoke_update_loop(Action::Tick, &mut app)?;
             }
             event_handler::Events::Exit => {
@@ -65,9 +56,12 @@ pub fn execute(
 //  //  //  //  //  //  //  //
 fn invoke_update_loop(first_action: Action, app_state: &mut AppState) -> Result<()> {
     let mut current_action = first_action;
-    while  if let Action::Noop = current_action {false} else {true} {
-        current_action = update(app_state, &current_action)?;
+    while if let Action::Noop = current_action {
+        false
+    } else {
+        true
+    } {
+        current_action = updater::update(app_state, &current_action)?;
     }
     Ok(())
 }
-

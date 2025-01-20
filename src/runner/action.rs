@@ -10,7 +10,7 @@ pub enum Action {
     TranslateRawEvent(xEvent::Event),
 
     // append
-    ProcessMainGamepadInput(gamepads::Gamepad),
+    ProcessMainGamepadInput(Option<gamepads::Gamepad>),
     /*
     ApplyEditedCode(bool), // is GameCode?
     ResetCounters,
