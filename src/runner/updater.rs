@@ -11,6 +11,10 @@ use cells_world::CellsWorld;
 //  //  //  //  //  //  //  //
 pub fn update(app_state: &mut AppState, action: &Action) -> Result<Action> {
     match (&app_state, action) {
+        (_, Action::Quit) => {
+            *app_state = AppState::Exiting;
+            return Ok(Action::Noop);
+        }
         (AppState::Working(_, world), Action::ProcessMainGamepadInput(None)) => {
             *app_state = AppState::Working(false, world.clone());
             return Ok(Action::Noop);
@@ -38,7 +42,7 @@ pub fn update(app_state: &mut AppState, action: &Action) -> Result<Action> {
             return Ok(Action::Noop);
         }
         _ => {
-            warn!("unprocessed Action <{:?}>", action);
+            //warn!("unprocessed Action <{:?}>", action);
             return Ok(Action::Noop);
         }
     }

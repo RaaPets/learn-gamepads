@@ -44,7 +44,6 @@ pub fn execute(
                 invoke_update_loop(Action::Tick, &mut app)?;
             }
             event_handler::Events::Exit => {
-                app = AppState::Exiting;
                 invoke_update_loop(Action::Quit, &mut app)?;
             }
         }
