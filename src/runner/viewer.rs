@@ -43,7 +43,10 @@ impl Widget for PlaygroundWidget<'_> {
         LeftGameBarWidget().render(left_bar, buf);
         TopGameBarWidget().render(top_bar, buf);
         if let Some(ref pos) = self.0 {
-            game_widget::GameWidget(pos).render(play_zone, buf);
+            let mut cells = cells_world::CellsWorld::new(16,16);
+            let ij = (pos.x as isize, pos.y as isize);
+            cells[ij] = cells_world::CellState::Player;
+            game_widget::GameWidget(Some(&cells)).render(play_zone, buf);
         }
     }
 }
