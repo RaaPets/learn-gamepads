@@ -1,8 +1,9 @@
 use ratatui::prelude::*;
-use Constraint::*;
 use ratatui::widgets::*;
+use Constraint::*;
 
 use super::AppState;
+use cells_world::CellsWorld;
 
 mod game_widget;
 
@@ -11,8 +12,11 @@ pub fn view(app_state: &AppState, area: Rect, buf: &mut Buffer) {
     let [top_area, game_area, status_area] =
         Layout::vertical([Length(4), Min(35), Min(4)]).areas(area);
 
-    if let AppState::Working(_, pos) = app_state {
-        PlaygroundWidget(Some(pos)).render(game_area, buf);
+    if let AppState::Working(_, cells) = app_state {
+        //let ij = (pos.x as isize, pos.y as isize);
+        //let mut cells = cells_world::CellsWorld::new(16, 16);
+        //cells[ij] = cells_world::CellState::Player;
+        PlaygroundWidget(Some(&cells)).render(game_area, buf);
     } else {
         PlaygroundWidget(None).render(game_area, buf);
     }
@@ -34,7 +38,7 @@ impl Widget for StatusAreaWidget {
     }
 }
 
-struct PlaygroundWidget<'a>(Option<&'a super::app_state::TestPos>);
+struct PlaygroundWidget<'a>(Option<&'a CellsWorld>);
 impl Widget for PlaygroundWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let [left_bar, other] = Layout::horizontal([Length(3), Length(67)]).areas(area);
@@ -42,12 +46,7 @@ impl Widget for PlaygroundWidget<'_> {
 
         LeftGameBarWidget().render(left_bar, buf);
         TopGameBarWidget().render(top_bar, buf);
-        if let Some(ref pos) = self.0 {
-            let mut cells = cells_world::CellsWorld::new(16,16);
-            let ij = (pos.x as isize, pos.y as isize);
-            cells[ij] = cells_world::CellState::Player;
-            game_widget::GameWidget(Some(&cells)).render(play_zone, buf);
-        }
+        game_widget::GameWidget(self.0).render(play_zone, buf);
     }
 }
 

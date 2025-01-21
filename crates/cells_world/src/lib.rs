@@ -9,6 +9,7 @@ pub enum CellState {
 }
 
 //  //  //  //  //  //  //  //
+#[derive(Debug, PartialEq)]
 pub struct CellsWorld {
     pub width: usize,
     pub height: usize,

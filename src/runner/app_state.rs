@@ -1,22 +1,10 @@
-
-//  //  //  //  //  //  //  //
-#[derive(Debug, Clone, PartialEq)]
-pub struct TestPos {
-    pub x: u16,
-    pub y: u16,
-}
-impl TestPos {
-    pub fn normalize(&mut self) {
-        self.x &= 0xF;
-        self.y &= 0xF;
-    }
-}
+use std::rc::Rc;
 
 //  //  //  //  //  //  //  //
 #[derive(Debug, PartialEq)]
 pub enum AppState {
     JustInited,
-    Working(bool, TestPos),
+    Working(bool, Rc<cells_world::CellsWorld>),
     Exiting,
 }
 

@@ -1,58 +1,71 @@
+use std::rc::Rc;
 use eyre::Result;
+use gamepads::Button;
 #[allow(unused_imports)]
 use raalog::{debug, error, info, trace, warn};
-use gamepads::Button;
 
-use super::app_state::TestPos;
 use super::Action;
 use super::AppState;
+use cells_world::CellsWorld;
 
 //  //  //  //  //  //  //  //
 pub fn update(app_state: &mut AppState, action: &Action) -> Result<Action> {
-    match action {
-        Action::ProcessMainGamepadInput(opt_gamepad) => {
-            let pre_test_pos = match app_state {
-                AppState::Working(_, pos) => pos.clone(),
-                _ => TestPos { x: 7, y: 7 },
-            };
-            if let Some(gamepad) = opt_gamepad {
-                let mut new_test_pos = pre_test_pos.clone();
-                for button in gamepad.all_just_pressed() {
-                    match button {
-                        Button::DPadUp => new_test_pos.y -= 1,
-                        Button::DPadDown => new_test_pos.y += 1,
-                        Button::DPadLeft => new_test_pos.x -= 1,
-                        Button::DPadRight => new_test_pos.x += 1,
-                        _ => (),
+    match (&app_state, action) {
+        (AppState::Working(_, world), Action::ProcessMainGamepadInput(None)) => {
+            *app_state = AppState::Working(false, world.clone());
+            return Ok(Action::Noop);
+        }
+        (AppState::Working(_, old_world), Action::ProcessMainGamepadInput(Some(gamepad))) => {
+            let (di, dj) = translateGamepad(gamepad);
+            if di == 0 && dj == 0 {
+                *app_state = AppState::Working(true, old_world.clone());
+            } else {
+                let mut new_world = CellsWorld::new(old_world.width, old_world.height);
+                for i in 0..new_world.width as isize {
+                    for j in 0..new_world.height as isize {
+                        let old_i = i + di;
+                        let old_j = j + dj;
+                        new_world[(i, j)] = old_world[(old_i, old_j)];
                     }
                 }
-                new_test_pos.normalize();
-                trace!("gm pos:\n{:?}", new_test_pos);
-                *app_state = AppState::Working(true, new_test_pos);
-            } else {
-                *app_state = AppState::Working(false, pre_test_pos);
+                *app_state = AppState::Working(true, Rc::new(new_world));
             }
+            return Ok(Action::Noop);
+        }
+        (AppState::JustInited, Action::Tick) => {
+            let started_world = create_world();
+            *app_state = AppState::Working(false, started_world);
+            return Ok(Action::Noop);
         }
         _ => {
-            warn!("unprocessed Action <{:?}>", action)
-            //return Err(eyre::eyre!("unprocessed Action <{:?}>", action));
+            warn!("unprocessed Action <{:?}>", action);
+            return Ok(Action::Noop);
         }
     }
-    Ok(Action::Noop)
 }
 
 //  //  //  //  //  //  //  //
+fn create_world() -> Rc<CellsWorld> {
+    let mut creation = CellsWorld::new(15, 15);
 
-/*
-                for button in gamepad.all_just_pressed() {
-                    match button {
-                        Button::DPadUp => println!("{:?}", button),
-                        Button::DPadDown => println!("{:?}", button),
-                        Button::DPadLeft => println!("{:?}", button),
-                        Button::DPadRight => println!("{:?}", button),
-                        _ => {
-                            println!("other -> {:?}", button);
-                        }
-                    }
-                }
-*/
+    creation[(3_isize,3)] = cells_world::CellState::Target;
+
+    Rc::new(creation)
+}
+
+//  //  //  //  //  //  //  //
+fn translateGamepad(gamepad: &gamepads::Gamepad) -> (isize, isize) {
+    let mut dx = 0;
+    let mut dy = 0;
+    for button in gamepad.all_just_pressed() {
+        match button {
+            Button::DPadUp => dy = -1,
+            Button::DPadDown => dy = 1,
+            Button::DPadLeft => dx = -1,
+            Button::DPadRight => dx = 1,
+            _ => (),
+        }
+    }
+
+    (dx, dy)
+}
