@@ -15,6 +15,7 @@ app_raa_tui = { path = "crates/app_raa_tui" }
 event_handler = { path = "crates/event_handler" }
 gamepad_handler = { path = "crates/gamepad_handler" }
 cells_world = { path = "crates/cells_world" }
+ecs_raa = { path = "crates/ecs_raa" }
 
 ##  ##  ##  ##  ##  ##  ##  ##
 [workspace]
@@ -24,6 +25,7 @@ members = [
 	"crates/gamepad_handler",
 	"crates/app_raa_tui",
 	"crates/cells_world",
+	"crates/ecs_raa",
 ]
 
 [workspace.dependencies]
