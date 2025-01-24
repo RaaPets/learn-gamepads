@@ -12,8 +12,8 @@ use ratatui::widgets::Block;
 use cells_world::*;
 
 //  //  //  //  //  //  //  //
-pub struct GameWidget<'a>(pub Option<&'a CellsWorld>);
-impl Widget for GameWidget<'_> {
+pub struct GameWidget(pub Option<std::rc::Rc<CellsWorld>>);
+impl Widget for GameWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered();
         let inner_area = block.inner(area);

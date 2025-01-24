@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use eyre::Result;
 use gamepads::Button;
 #[allow(unused_imports)]
@@ -6,89 +5,115 @@ use raalog::{debug, error, info, trace, warn};
 
 use super::Action;
 use super::AppState;
-use cells_world::*;
+use super::WorkingParams;
+use hecs_wrapper::prelude::*;
 
 //  //  //  //  //  //  //  //
-pub fn update(app_state: &mut AppState, action: &Action) -> Result<Action> {
-    match (&app_state, action) {
-        (_, Action::Quit) => {
-            *app_state = AppState::Exiting;
-            return Ok(Action::Noop);
-        }
-        (AppState::Working(_, world), Action::ProcessMainGamepadInput(None)) => {
-            *app_state = AppState::Working(false, world.clone());
-            return Ok(Action::Noop);
-        }
-        (AppState::Working(_, old_world), Action::ProcessMainGamepadInput(Some(gamepad))) => {
-            let (di, dj, restart) = translateGamepad(gamepad);
-            if restart {
-                *app_state = AppState::JustInited;
-                return Ok(Action::Noop);
-            }
-            if di == 0 && dj == 0 {
-                *app_state = AppState::Working(true, old_world.clone());
-            } else {
-                let mut new_world = CellsWorld::new(old_world.width, old_world.height);
-                let mut old_player = None;
-                for i in 0..new_world.width as isize {
-                    for j in 0..new_world.height as isize {
-                        let old_i = i + di;
-                        let old_j = j + dj;
-                        let old_cell = old_world[(old_i, old_j)];
-                        if old_cell == CellState::Player {
-                            new_world[(i, j)] = CellState::Empty;
-                            old_player = Some((old_i, old_j));
-                        } else {
-                            new_world[(i, j)] = old_cell;
-                        }
-                    }
-                }
-                if let Some((pi, pj)) = old_player {
-                        new_world[(pi, pj)] = CellState::Player;
-                }
-                *app_state = AppState::Working(true, Rc::new(new_world));
-            }
-            return Ok(Action::Noop);
-        }
+pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)> {
+    match (state, with_action) {
         (AppState::JustInited, Action::Tick) => {
-            let started_world = create_world();
-            *app_state = AppState::Working(false, started_world);
-            return Ok(Action::Noop);
+            let mut world = Box::new(RaaWorld::new());
+            world.update_on_tick()?;
+
+            let new_state = AppState::Working(WorkingParams {
+                is_gamepad_connected: None,
+                world,
+            });
+            return Ok((new_state, Action::Noop));
         }
-        _ => {
+        (AppState::Working(mut working), Action::Tick) => {
+            working.world.update_on_tick()?;
+            let new_state = AppState::Working(working);
+            return Ok((new_state, Action::Noop));
+        }
+        (AppState::Working(mut working), Action::GameInput(input)) => {
+            working.world.process_input(&input)?;
+            let new_state = AppState::Working(working);
+            return Ok((new_state, Action::Noop));
+        }
+        (AppState::Working(mut working), Action::ProcessMainGamepadInput(None)) => {
+            working.is_gamepad_connected = Some(false);
+            let new_state = AppState::Working(working);
+            return Ok((new_state, Action::Noop));
+        }
+        (AppState::Working(mut working), Action::ProcessMainGamepadInput(Some(gamepad))) => {
+            working.is_gamepad_connected = Some(true);
+            let new_state = AppState::Working(working);
+            let input = translateGamepad(&gamepad);
+            return Ok((new_state, Action::GameInput(input)));
+        }
+        (AppState::Working(working), Action::TranslateRawEvent(ev)) => {
+            if let Some(true) = &working.is_gamepad_connected {
+                let new_state = AppState::Working(working);
+                return Ok((new_state, Action::Noop));
+            }
+            let input = translateKeyboard(ev);
+            let new_state = AppState::Working(working);
+            return Ok((new_state, Action::GameInput(input)));
+        }
+        (_, Action::Quit) => {
+            return Ok((AppState::Exiting, Action::Noop));
+        }
+        (state_out, _) => {
             //warn!("unprocessed Action <{:?}>", action);
-            return Ok(Action::Noop);
+            return Ok((state_out, Action::Noop));
         }
     }
 }
 
 //  //  //  //  //  //  //  //
-fn create_world() -> Rc<CellsWorld> {
-    let mut creation = CellsWorld::new(15, 15);
-
-    creation[(2_isize,2)] = CellState::Target;
-    creation[(9_isize,5)] = CellState::Target;
-    creation[(12_isize,15)] = CellState::Obstacle;
-    creation[(7_isize,7)] = CellState::Player;
-
-    Rc::new(creation)
-}
-
-//  //  //  //  //  //  //  //
-fn translateGamepad(gamepad: &gamepads::Gamepad) -> (isize, isize, bool) {
-    let mut dx = 0;
-    let mut dy = 0;
+#[inline(always)]
+fn translateGamepad(gamepad: &gamepads::Gamepad) -> WorldInput {
+    let mut di = 0;
+    let mut dj = 0;
     let mut restart = false;
     for button in gamepad.all_just_pressed() {
         match button {
-            Button::DPadUp => dy = -1,
-            Button::DPadDown => dy = 1,
-            Button::DPadLeft => dx = -1,
-            Button::DPadRight => dx = 1,
+            Button::DPadUp => dj = -1,
+            Button::DPadDown => dj = 1,
+            Button::DPadLeft => di = -1,
+            Button::DPadRight => di = 1,
             Button::RightCenterCluster => restart = true,
             _ => (),
         }
     }
 
-    (dx, dy, restart)
+    WorldInput { di, dj, restart }
+}
+
+//  //  //  //  //  //  //  //
+use ratatui::crossterm::event as xEvent;
+
+#[inline(always)]
+fn translateKeyboard(event: xEvent::Event) -> WorldInput {
+
+    let mut di = 0;
+    let mut dj = 0;
+    let mut restart = false;
+    if let xEvent::Event::Key(key) = event {
+        /*
+        if key.modifiers.contains(xEvent::KeyModifiers::CONTROL) {
+            if key.code == xEvent::KeyCode::Char('p') {
+                //return Ok(Action::PopupLuaEditor);
+            }
+        }
+        */
+            if key.code == xEvent::KeyCode::Char('k') {
+                dj = -1;
+            }
+            if key.code == xEvent::KeyCode::Char('j') {
+                dj = 1;
+            }
+            if key.code == xEvent::KeyCode::Char('h') {
+                di = -1;
+            }
+            if key.code == xEvent::KeyCode::Char('l') {
+                di = 1;
+            }
+            if key.code == xEvent::KeyCode::Char('r') {
+                restart = true;
+            }
+    }
+
+    WorldInput { di, dj, restart }
 }

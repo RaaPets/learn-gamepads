@@ -8,7 +8,7 @@ mod updater;
 mod viewer;
 
 mod app_state;
-use app_state::AppState;
+use app_state::*;
 
 static TICK: std::time::Duration = std::time::Duration::from_millis(300);
 
@@ -17,14 +17,14 @@ pub fn execute(
     terminal: &mut ratatui::Terminal<ratatui::prelude::CrosstermBackend<std::io::Stdout>>,
 ) -> Result<()> {
     trace!("runner::execute()..");
-    let mut app = AppState::JustInited;
 
     let handler = event_handler::EventHandler::new(TICK);
     let mut gamepad_handler = gamepad_handler::GamepadHandler::new();
 
-    while !app.is_exiting() {
+    let mut app_state = AppState::JustInited;
+    while !&app_state.is_exiting() {
         // DRAW
-        terminal.draw(|frame| viewer::view(&mut app, frame.area(), frame.buffer_mut()))?;
+        terminal.draw(|frame| viewer::view(&app_state, frame.area(), frame.buffer_mut()))?;
 
         // UPDATE
         //      get inputs
@@ -34,17 +34,20 @@ pub fn execute(
         //      process inputs
         match raw_input {
             event_handler::Events::Input(raw_event) => {
-                invoke_update_loop(Action::TranslateRawEvent(raw_event), &mut app)?;
+                app_state = invoke_update_loop(app_state, Action::TranslateRawEvent(raw_event))?;
             }
             event_handler::Events::Tick => {
-                gamepad_handler.update();
-                let main_gamepad = gamepad_handler.get_gamepad(0);
-                invoke_update_loop(Action::ProcessMainGamepadInput(main_gamepad), &mut app)?;
+                let main_gamepad = {
+                    gamepad_handler.update();
+                    gamepad_handler.get_gamepad(0)
+                };
+                app_state =
+                    invoke_update_loop(app_state, Action::ProcessMainGamepadInput(main_gamepad))?;
 
-                invoke_update_loop(Action::Tick, &mut app)?;
+                app_state = invoke_update_loop(app_state, Action::Tick)?;
             }
             event_handler::Events::Exit => {
-                invoke_update_loop(Action::Quit, &mut app)?;
+                app_state = invoke_update_loop(app_state, Action::Quit)?;
             }
         }
     }
@@ -53,14 +56,16 @@ pub fn execute(
 }
 
 //  //  //  //  //  //  //  //
-fn invoke_update_loop(first_action: Action, app_state: &mut AppState) -> Result<()> {
-    let mut current_action = first_action;
-    while if let Action::Noop = current_action {
+fn invoke_update_loop(first_state: AppState, first_action: Action) -> Result<AppState> {
+    let mut current: (AppState, Action) = (first_state, first_action);
+
+    while if let (_, Action::Noop) = current {
         false
     } else {
         true
     } {
-        current_action = updater::update(app_state, &current_action)?;
+        current = updater::update(current.0, current.1)?;
     }
-    Ok(())
+
+    Ok(current.0)
 }
