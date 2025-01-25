@@ -1,4 +1,4 @@
-use eyre::Result;
+use eyre::{eyre, Result};
 use std::collections::VecDeque;
 
 use super::components::*;
@@ -30,8 +30,27 @@ impl CommandBuffer {
     }
 }
 
+mod with_player {
+    use super::*;
+    pub(super) fn add_last(player_input: &mut player::PlayerInput, cmd: InputCommand) {
+        player_input.input_buffer.push_back(cmd);
+    }
+    pub(super) fn take_first(player_input: &mut player::PlayerInput ) -> Option<InputCommand> {
+        player_input.input_buffer.pop_front()
+    }
+}
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
+    pub fn send_to_player(&mut self, inputs: Vec<InputCommand>) -> Result<()> {
+        for (_id, player_input) in self.world.query_mut::<&mut player::PlayerInput>() {
+        for cmd in inputs.into_iter() {
+            with_player::add_last(player_input, cmd);
+        }
+            return Ok(());
+        }
+        Err(eyre!("there is NO player"))
+    }
+
     pub fn insert_input(&mut self, inputs: Vec<InputCommand>) -> Result<()> {
         let input_entity = match self.input_entity {
             Some(entity) => entity,
@@ -47,7 +66,7 @@ impl super::RaaWorld {
             .get::<&mut CommandBuffer>(self.input_entity.unwrap())?;
 
         for cmd in inputs.into_iter() {
-                input_holder.add_last(cmd);
+            input_holder.add_last(cmd);
         }
 
         Ok(())

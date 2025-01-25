@@ -31,7 +31,7 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
             if restart {
                 return Ok((AppState::JustInited, Action::Noop));
             }
-            working.world.insert_input(input)?;
+            working.world.send_to_player(input)?;
             let new_state = AppState::Working(working);
             return Ok((new_state, Action::Noop));
         }
@@ -76,10 +76,10 @@ fn translate_gamepad(gamepad: &gamepads::Gamepad) -> (Vec<InputCommand>, bool) {
             Button::DPadDown => cmds.push(InputCommand::OnceDown),
             Button::DPadLeft => cmds.push(InputCommand::OnceLeft),
             Button::DPadRight => cmds.push(InputCommand::OnceRight),
-            Button::ActionUp => cmds.push(InputCommand::TypeDigital(1),
-            Button::ActionRight => cmds.push(InputCommand::TypeDigital(2),
-            Button::ActionDown => cmds.push(InputCommand::TypeDigital(3),
-            Button::ActionLeft => cmds.push(InputCommand::TypeDigital(4),
+            Button::ActionUp => cmds.push(InputCommand::TypeDigital(1)),
+            Button::ActionRight => cmds.push(InputCommand::TypeDigital(2)),
+            Button::ActionDown => cmds.push(InputCommand::TypeDigital(3)),
+            Button::ActionLeft => cmds.push(InputCommand::TypeDigital(4)),
             _ => (),
         }
     }
