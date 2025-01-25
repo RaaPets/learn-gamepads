@@ -13,7 +13,7 @@ pub enum Action {
     TranslateRawEvent(xEvent::Event),
 
     // append
-    GameInput(WorldInput),
+    GameInput(Vec<InputCommand>, bool),
     ProcessMainGamepadInput(Option<gamepads::Gamepad>),
     /*
     ApplyEditedCode(bool), // is GameCode?

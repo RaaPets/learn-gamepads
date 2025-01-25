@@ -13,6 +13,7 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
     match (state, with_action) {
         (AppState::JustInited, Action::Tick) => {
             let mut world = Box::new(RaaWorld::new());
+            world.repopulate();
             world.update_on_tick()?;
 
             let new_state = AppState::Working(WorkingParams {
@@ -26,8 +27,11 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
             let new_state = AppState::Working(working);
             return Ok((new_state, Action::Noop));
         }
-        (AppState::Working(mut working), Action::GameInput(input)) => {
-            working.world.process_input(&input)?;
+        (AppState::Working(mut working), Action::GameInput(input, restart)) => {
+            if restart {
+                return Ok((AppState::JustInited, Action::Noop));
+            }
+            working.world.insert_input(input)?;
             let new_state = AppState::Working(working);
             return Ok((new_state, Action::Noop));
         }
@@ -39,23 +43,22 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
         (AppState::Working(mut working), Action::ProcessMainGamepadInput(Some(gamepad))) => {
             working.is_gamepad_connected = Some(true);
             let new_state = AppState::Working(working);
-            let input = translateGamepad(&gamepad);
-            return Ok((new_state, Action::GameInput(input)));
+            let (input, restart) = translate_gamepad(&gamepad);
+            return Ok((new_state, Action::GameInput(input, restart)));
         }
         (AppState::Working(working), Action::TranslateRawEvent(ev)) => {
             if let Some(true) = &working.is_gamepad_connected {
                 let new_state = AppState::Working(working);
                 return Ok((new_state, Action::Noop));
             }
-            let input = translateKeyboard(ev);
+            let (input, restart) = translate_keyboard(ev);
             let new_state = AppState::Working(working);
-            return Ok((new_state, Action::GameInput(input)));
+            return Ok((new_state, Action::GameInput(input, restart)));
         }
         (_, Action::Quit) => {
             return Ok((AppState::Exiting, Action::Noop));
         }
         (state_out, _) => {
-            //warn!("unprocessed Action <{:?}>", action);
             return Ok((state_out, Action::Noop));
         }
     }
@@ -63,57 +66,51 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
 
 //  //  //  //  //  //  //  //
 #[inline(always)]
-fn translateGamepad(gamepad: &gamepads::Gamepad) -> WorldInput {
-    let mut di = 0;
-    let mut dj = 0;
+fn translate_gamepad(gamepad: &gamepads::Gamepad) -> (Vec<InputCommand>, bool) {
     let mut restart = false;
+    let mut cmds = Vec::new();
     for button in gamepad.all_just_pressed() {
         match button {
-            Button::DPadUp => dj = -1,
-            Button::DPadDown => dj = 1,
-            Button::DPadLeft => di = -1,
-            Button::DPadRight => di = 1,
             Button::RightCenterCluster => restart = true,
+            Button::DPadUp => cmds.push(InputCommand::OnceUp),
+            Button::DPadDown => cmds.push(InputCommand::OnceDown),
+            Button::DPadLeft => cmds.push(InputCommand::OnceLeft),
+            Button::DPadRight => cmds.push(InputCommand::OnceRight),
+            Button::ActionUp => cmds.push(InputCommand::TypeDigital(1),
+            Button::ActionRight => cmds.push(InputCommand::TypeDigital(2),
+            Button::ActionDown => cmds.push(InputCommand::TypeDigital(3),
+            Button::ActionLeft => cmds.push(InputCommand::TypeDigital(4),
             _ => (),
         }
     }
 
-    WorldInput { di, dj, restart }
+    (cmds, restart)
 }
 
 //  //  //  //  //  //  //  //
 use ratatui::crossterm::event as xEvent;
 
 #[inline(always)]
-fn translateKeyboard(event: xEvent::Event) -> WorldInput {
-
-    let mut di = 0;
-    let mut dj = 0;
+fn translate_keyboard(event: xEvent::Event) -> (Vec<InputCommand>, bool) {
     let mut restart = false;
+    let mut cmds = Vec::new();
     if let xEvent::Event::Key(key) = event {
-        /*
-        if key.modifiers.contains(xEvent::KeyModifiers::CONTROL) {
-            if key.code == xEvent::KeyCode::Char('p') {
-                //return Ok(Action::PopupLuaEditor);
-            }
-        }
-        */
             if key.code == xEvent::KeyCode::Char('k') {
-                dj = -1;
+            cmds.push(InputCommand::OnceUp);
             }
             if key.code == xEvent::KeyCode::Char('j') {
-                dj = 1;
+            cmds.push(InputCommand::OnceDown);
             }
             if key.code == xEvent::KeyCode::Char('h') {
-                di = -1;
+            cmds.push(InputCommand::OnceLeft);
             }
             if key.code == xEvent::KeyCode::Char('l') {
-                di = 1;
+            cmds.push(InputCommand::OnceRight);
             }
             if key.code == xEvent::KeyCode::Char('r') {
                 restart = true;
             }
     }
 
-    WorldInput { di, dj, restart }
+    (cmds, restart)
 }

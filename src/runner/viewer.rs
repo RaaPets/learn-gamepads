@@ -14,7 +14,7 @@ pub fn view(app_state: &AppState, area: Rect, buf: &mut Buffer) {
         Layout::vertical([Length(4), Min(35), Min(4)]).areas(area);
 
     if let AppState::Working(working) = app_state {
-        let cells = working.world.render_cells(15, 15);
+        let cells = working.world.render_cells(16, 16);
         PlaygroundWidget(cells).render(game_area, buf);
     } else {
         PlaygroundWidget(None).render(game_area, buf);

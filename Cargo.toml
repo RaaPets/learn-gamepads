@@ -17,6 +17,7 @@ event_handler = { path = "crates/event_handler" }
 gamepad_handler = { path = "crates/gamepad_handler" }
 cells_world = { path = "crates/cells_world" }
 hecs_wrapper = { path = "crates/hecs_wrapper" }
+arithm2d = { path = "crates/arithm2d" }
 #ecs_raa = { path = "crates/ecs_raa" }
 
 ##  ##  ##  ##  ##  ##  ##  ##
@@ -29,6 +30,7 @@ members = [
 	"crates/cells_world",
 	#"crates/ecs_raa",
 	"crates/hecs_wrapper",
+	"crates/arithm2d",
 ]
 
 [workspace.dependencies]

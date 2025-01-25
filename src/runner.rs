@@ -10,7 +10,7 @@ mod viewer;
 mod app_state;
 use app_state::*;
 
-static TICK: std::time::Duration = std::time::Duration::from_millis(300);
+static TICK: std::time::Duration = std::time::Duration::from_millis(25);
 
 //  //  //  //  //  //  //  //
 pub fn execute(

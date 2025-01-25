@@ -8,3 +8,4 @@ eyre.workspace = true
 raalog.workspace = true
 hecs.workspace = true
 cells_world = { path = "../cells_world" }
+arithm2d = { path = "../arithm2d" }
