@@ -19,6 +19,26 @@ impl<V: std::cmp::PartialEq> PartialEq for Pos2D<V> {
 }
 
 //  //  //  //  //  //  //  //
+impl<V: ops::Mul<Output = V> + Clone> ops::Mul<V> for Pos2D<V> {
+    type Output = Self;
+    fn mul(self, rhs: V) -> Self::Output {
+        Self {
+            x: self.x * rhs.clone(),
+            y: self.y * rhs,
+        }
+    }
+}
+impl<V: ops::Div<Output = V> + Clone> ops::Div<V> for Pos2D<V> {
+    type Output = Self;
+    fn div(self, rhs: V) -> Self::Output {
+        Self {
+            x: self.x / rhs.clone(),
+            y: self.y / rhs,
+        }
+    }
+}
+
+//  //  //  //  //  //  //  //
 impl<V: ops::SubAssign> ops::SubAssign for Pos2D<V> {
     fn sub_assign(&mut self, rhs: Self) {
             self.x -= rhs.x;
@@ -147,6 +167,24 @@ mod copmaration_tests {
 #[cfg(test)]
 mod arithm_tests {
     use super::*;
+
+    #[test]
+    fn div_with_value() {
+        let pos1 = Pos2D::from((6, 3));
+        let val = 3;
+        let pos = pos1 / val;
+        assert!(pos.x == 2);
+        assert!(pos.y == 1);
+    }
+
+    #[test]
+    fn mul_with_value() {
+        let pos1 = Pos2D::from((2, 3));
+        let val = 3;
+        let pos = pos1 * val;
+        assert!(pos.x == 6);
+        assert!(pos.y == 9);
+    }
 
     #[test]
     fn sub_assign() {

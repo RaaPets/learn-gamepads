@@ -1,3 +1,5 @@
+use arithm2d::pos2d::Pos2D;
+
 use super::components::*;
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
@@ -13,7 +15,12 @@ impl super::RaaWorld {
                 let ent_a = ent_list[primary as usize];
                 let ent_b = ent_list[secondary as usize];
 
-                touch_correction(&self.world, &ent_a, &ent_b);
+                if let Some((mov_a, mov_b)) =
+                    check_entities_for_correction(&self.world, &ent_a, &ent_b)
+                {
+                    self.world.insert_one(ent_a, mov_a);
+                    self.world.insert_one(ent_b, mov_b);
+                }
             }
         }
     }
@@ -21,11 +28,11 @@ impl super::RaaWorld {
 
 //  //  //  //  //  //  //  //
 #[inline(always)]
-fn touch_correction(
+fn check_entities_for_correction(
     world: &hecs::World,
     ent_a: &hecs::Entity,
     ent_b: &hecs::Entity,
-) -> Option<bool> {
+) -> Option<(Movement, Movement)> {
     if ent_a == ent_b {
         return None;
     }
@@ -35,25 +42,34 @@ fn touch_correction(
     let Ok(pos_b) = world.get::<&Position>(*ent_b) else {
         return None;
     };
-    todo!("touch_correction");
+    check_positions_for_correction(&pos_a, &pos_b)
 }
 
 #[inline(always)]
-fn touch_correction(
-    world: &hecs::World,
-    ent_a: &hecs::Entity,
-    ent_b: &hecs::Entity,
-) -> Option<bool> {
-    if ent_a == ent_b {
+fn check_positions_for_correction(
+    pos_a: &Position,
+    pos_b: &Position,
+) -> Option<(Movement, Movement)> {
+    let int_pos_a = Pos2D::<isize> {
+        x: pos_a.x as isize,
+        y: pos_a.y as isize,
+    };
+    let int_pos_b = Pos2D::<isize> {
+        x: pos_b.x as isize,
+        y: pos_b.y as isize,
+    };
+    if int_pos_a != int_pos_b {
         return None;
     }
-    let Ok(pos_a) = world.get::<&Position>(*ent_a) else {
-        return None;
-    };
-    let Ok(pos_b) = world.get::<&Position>(*ent_b) else {
-        return None;
-    };
-    todo!("touch_correction");
+    if pos_a == pos_b {
+        let mov_a = Movement((-0.01, 0.).into());
+        let mov_b = Movement((0.01, 0.).into());
+        return Some((mov_a, mov_b));
+    }
+    let a_to_b = *pos_b - *pos_a;
+    let mov_a = Movement(-a_to_b / 2.);
+    let mov_b = Movement(a_to_b / 2.);
+    return Some((mov_a, mov_b));
 }
 
 //  //  //  //  //  //  //  //
@@ -72,12 +88,12 @@ mod correct_bounds_test {
         let no_pos_a = world.world.spawn((3, true));
         let no_pos_b = world.world.spawn((4, false));
 
-        assert!(touch_correction(&world.world, &pos_a, &no_pos_a) == None);
-        assert!(touch_correction(&world.world, &pos_b, &no_pos_b) == None);
-        assert!(touch_correction(&world.world, &no_pos_a, &no_pos_b) == None);
-        assert!(touch_correction(&world.world, &no_pos_a, &pos_b) == None);
-        assert!(touch_correction(&world.world, &no_pos_a, &pos_a) == None);
-        assert!(touch_correction(&world.world, &pos_a, &pos_a) == None);
+        assert!(check_entities_for_correction(&world.world, &pos_a, &no_pos_a).is_none());
+        assert!(check_entities_for_correction(&world.world, &pos_b, &no_pos_b).is_none());
+        assert!(check_entities_for_correction(&world.world, &no_pos_a, &no_pos_b).is_none());
+        assert!(check_entities_for_correction(&world.world, &no_pos_a, &pos_b).is_none());
+        assert!(check_entities_for_correction(&world.world, &no_pos_a, &pos_a).is_none());
+        assert!(check_entities_for_correction(&world.world, &pos_a, &pos_a).is_none());
     }
 
     /*
