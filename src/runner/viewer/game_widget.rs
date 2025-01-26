@@ -4,6 +4,8 @@ static empty_bg: Color = Color::Rgb(8, 8, 8);
 static red_empty_bg: Color = Color::Rgb(64, 8, 8);
 #[allow(non_upper_case_globals)]
 static obstacle_bg: Color = Color::Rgb(64, 64, 64);
+#[allow(non_upper_case_globals)]
+static char_bg: Color = Color::Rgb(0, 0, 64);
 
 
 use ratatui::prelude::*;
@@ -69,6 +71,11 @@ impl Widget for GameCellWG {
                 buf[center].set_char(' ').set_bg(obstacle_bg);
                 buf[left].set_char(' ').set_bg(obstacle_bg);
                 buf[right].set_char(' ').set_bg(obstacle_bg);
+            }
+            CellState::SomeChar(ch) => {
+                buf[center].set_char(ch).set_bg(char_bg);
+                buf[left].set_char(' ').set_bg(char_bg);
+                buf[right].set_char(' ').set_bg(char_bg);
             }
         }
     }

@@ -7,6 +7,7 @@ pub struct CellType(pub CellState);
 //  //  //  //  //  //  //  //
 use arithm2d::pos2d;
 pub type Position = pos2d::Pos2D<f64>;
+pub struct Movement(pub pos2d::Pos2D<f64>);
 
 //  //  //  //  //  //  //  //
 pub mod player {

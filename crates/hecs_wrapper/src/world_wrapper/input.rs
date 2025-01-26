@@ -1,103 +1,78 @@
-use eyre::{eyre, Result};
-use std::collections::VecDeque;
+//use eyre::{eyre, Result};
+use crate::error::input_system::*;
 
 use super::components::*;
 //  //  //  //  //  //  //  //
 #[derive(Debug, PartialEq)]
 pub enum InputCommand {
-    TypeDigital(u8),
+    TypeDigital(char),
     OnceUp,
     OnceDown,
     OnceLeft,
     OnceRight,
+    Accelerate((f32, f32)),
 }
-
-#[derive(Debug)]
-struct CommandBuffer {
-    commands: VecDeque<InputCommand>,
-}
-impl CommandBuffer {
-    fn new() -> Self {
-        Self {
-            commands: VecDeque::new(),
-        }
-    }
-    fn add_last(&mut self, cmd: InputCommand) {
-        self.commands.push_back(cmd);
-    }
-    fn take_first(&mut self) -> Option<InputCommand> {
-        self.commands.pop_front()
-    }
-}
-
+//  //  //  //  //  //  //  //
 mod with_player {
     use super::*;
     pub(super) fn add_last(player_input: &mut player::PlayerInput, cmd: InputCommand) {
         player_input.input_buffer.push_back(cmd);
     }
-    pub(super) fn take_first(player_input: &mut player::PlayerInput ) -> Option<InputCommand> {
+    pub(super) fn take_first(player_input: &mut player::PlayerInput) -> Option<InputCommand> {
         player_input.input_buffer.pop_front()
     }
 }
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
-    pub fn send_to_player(&mut self, inputs: Vec<InputCommand>) -> Result<()> {
+    pub fn send_to_player(&mut self, inputs: Vec<InputCommand>) -> Result {
         for (_id, player_input) in self.world.query_mut::<&mut player::PlayerInput>() {
-        for cmd in inputs.into_iter() {
-            with_player::add_last(player_input, cmd);
-        }
+            for cmd in inputs.into_iter() {
+                with_player::add_last(player_input, cmd);
+            }
             return Ok(());
         }
-        Err(eyre!("there is NO player"))
+        Err(InputSystemError::NoPlayerToSend)
     }
 
-    pub fn insert_input(&mut self, inputs: Vec<InputCommand>) -> Result<()> {
-        let input_entity = match self.input_entity {
-            Some(entity) => entity,
-            None => {
-                let new_entity = self.world.spawn(());
-                self.world.insert_one(new_entity, CommandBuffer::new())?;
-                new_entity
-            }
-        };
-        self.input_entity = Some(input_entity);
-        let mut input_holder = self
-            .world
-            .get::<&mut CommandBuffer>(self.input_entity.unwrap())?;
-
-        for cmd in inputs.into_iter() {
-            input_holder.add_last(cmd);
+    pub(crate) fn input_system_update(&mut self) -> eyre::Result<()> {
+        let mut player_entity = None;
+        for (id, _) in self.world.query::<&player::PlayerInput>().iter() {
+            player_entity = Some(id);
+            break;
         }
-
-        Ok(())
-    }
-
-    pub(crate) fn input_system_update(&mut self) -> Result<()> {
-        let Some(input_entity) = self.input_entity else {
+        let Some(input_entity) = player_entity else {
             return Ok(());
         };
 
         let mut di = 0.;
         let mut dj = 0.;
+        let mut last_ch = None;
         {
-            let mut input_holder = self.world.get::<&mut CommandBuffer>(input_entity)?;
+            let mut player_input = self.world.get::<&mut player::PlayerInput>(input_entity)?;
 
-            todo!("nesessary to extract command list. process it. and include creating new Entities with NUMBER");
-
-            while let Some(cmd) = input_holder.take_first() {
+            while let Some(cmd) = with_player::take_first(&mut player_input) {
                 match cmd {
                     InputCommand::OnceUp => dj -= 1.,
                     InputCommand::OnceDown => dj += 1.,
                     InputCommand::OnceLeft => di -= 1.,
                     InputCommand::OnceRight => di += 1.,
-                    _ => (),
+                    InputCommand::Accelerate((ddi, ddj)) => {
+                        di += (ddi as f64) / 3.5;
+                        dj -= (ddj as f64) / 3.5;
+                    }
+                    InputCommand::TypeDigital(ch) => last_ch = Some(ch),
                 }
             }
         }
-
-        for (_id, (position, _)) in self.world.query_mut::<(&mut Position, &UserInput)>() {
-            *position += (di, dj).into();
+        if let Some(ch) = last_ch {
+            let mut pos = (*self.world.get::<&Position>(input_entity)?).clone();
+            pos.y = pos.y - 1.;
+            self.world
+                .spawn((CellType(cells_world::CellState::SomeChar(ch)), pos));
         }
+
+        self.world
+            .insert_one(input_entity, Movement((di, dj).into()))?;
 
         Ok(())
     }
@@ -108,49 +83,42 @@ impl super::RaaWorld {
 //  //  //  //  //  //  //  //
 #[cfg(test)]
 mod base_test {
-    use super::super::*;
     use super::*;
+    use crate::prelude::*;
+    use cells_world::*;
 
     #[test]
-    fn repopulation() -> Result<()> {
+    fn creation() -> eyre::Result<()> {
         let mut world = RaaWorld::new();
         assert!(world.world.len() == 0);
-        world.repopulate();
-        assert!(world.input_entity == None);
-        let base_count = world.world.len();
+        world.input_system_update()?;
 
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.input_entity != None);
-        assert!(world.world.len() == base_count + 1);
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.input_entity != None);
-        assert!(world.world.len() == base_count + 1);
+        assert!(
+            world.send_to_player(vec![InputCommand::OnceUp])
+                == Err(InputSystemError::NoPlayerToSend)
+        );
+        world.input_system_update()?;
 
-        world.repopulate();
-        assert!(world.input_entity == None);
-        assert!(world.world.len() == base_count);
-
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.input_entity != None);
-        assert!(world.world.len() == base_count + 1);
-        assert!(world.input_entity != None);
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.world.len() == base_count + 1);
-        Ok(())
-    }
-
-    #[test]
-    fn creation() -> Result<()> {
-        let mut world = RaaWorld::new();
-        assert!(world.input_entity == None);
-        assert!(world.world.len() == 0);
-
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.input_entity != None);
+        world
+            .world
+            .spawn((CellType(CellState::Target), Position::from_tuple((0, 0))));
         assert!(world.world.len() == 1);
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        world.insert_input(vec![InputCommand::OnceUp])?;
-        assert!(world.world.len() == 1);
+        assert!(
+            world.send_to_player(vec![InputCommand::OnceUp])
+                == Err(InputSystemError::NoPlayerToSend)
+        );
+        world.input_system_update()?;
+
+        world.world.spawn((
+            CellType(CellState::Player),
+            UserInput,
+            player::PlayerInput::new(),
+            Position::from_tuple((7, 7)),
+        ));
+        assert!(world.world.len() == 2);
+        world.send_to_player(vec![InputCommand::OnceUp])?;
+        world.input_system_update()?;
+
         Ok(())
     }
 }

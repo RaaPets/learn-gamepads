@@ -6,6 +6,7 @@ pub enum CellState {
     Player,
     Target,
     Obstacle,
+    SomeChar(char),
 }
 
 //  //  //  //  //  //  //  //

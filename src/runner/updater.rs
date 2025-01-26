@@ -7,6 +7,7 @@ use super::Action;
 use super::AppState;
 use super::WorkingParams;
 use hecs_wrapper::prelude::*;
+use hecs_wrapper::error::input_system;
 
 //  //  //  //  //  //  //  //
 pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)> {
@@ -31,7 +32,9 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
             if restart {
                 return Ok((AppState::JustInited, Action::Noop));
             }
-            working.world.send_to_player(input)?;
+            if working.world.send_to_player(input) == Err(input_system::InputSystemError::NoPlayerToSend) {
+                warn!("{}", input_system::InputSystemError::NoPlayerToSend);
+            }
             let new_state = AppState::Working(working);
             return Ok((new_state, Action::Noop));
         }
@@ -76,13 +79,14 @@ fn translate_gamepad(gamepad: &gamepads::Gamepad) -> (Vec<InputCommand>, bool) {
             Button::DPadDown => cmds.push(InputCommand::OnceDown),
             Button::DPadLeft => cmds.push(InputCommand::OnceLeft),
             Button::DPadRight => cmds.push(InputCommand::OnceRight),
-            Button::ActionUp => cmds.push(InputCommand::TypeDigital(1)),
-            Button::ActionRight => cmds.push(InputCommand::TypeDigital(2)),
-            Button::ActionDown => cmds.push(InputCommand::TypeDigital(3)),
-            Button::ActionLeft => cmds.push(InputCommand::TypeDigital(4)),
+            Button::ActionUp => cmds.push(InputCommand::TypeDigital('4')),
+            Button::ActionRight => cmds.push(InputCommand::TypeDigital('3')),
+            Button::ActionDown => cmds.push(InputCommand::TypeDigital('2')),
+            Button::ActionLeft => cmds.push(InputCommand::TypeDigital('1')),
             _ => (),
         }
     }
+    cmds.push(InputCommand::Accelerate(gamepad.left_stick()));
 
     (cmds, restart)
 }
@@ -95,21 +99,37 @@ fn translate_keyboard(event: xEvent::Event) -> (Vec<InputCommand>, bool) {
     let mut restart = false;
     let mut cmds = Vec::new();
     if let xEvent::Event::Key(key) = event {
-            if key.code == xEvent::KeyCode::Char('k') {
-            cmds.push(InputCommand::OnceUp);
-            }
-            if key.code == xEvent::KeyCode::Char('j') {
-            cmds.push(InputCommand::OnceDown);
-            }
-            if key.code == xEvent::KeyCode::Char('h') {
-            cmds.push(InputCommand::OnceLeft);
-            }
-            if key.code == xEvent::KeyCode::Char('l') {
-            cmds.push(InputCommand::OnceRight);
-            }
-            if key.code == xEvent::KeyCode::Char('r') {
-                restart = true;
-            }
+        match key.code {
+            xEvent::KeyCode::Char('r') => restart = true,
+
+            xEvent::KeyCode::Char('k') => {
+                cmds.push(InputCommand::OnceUp);
+            },
+            xEvent::KeyCode::Char('j') => {
+                cmds.push(InputCommand::OnceDown);
+            },
+            xEvent::KeyCode::Char('h') => {
+                cmds.push(InputCommand::OnceLeft);
+            },
+            xEvent::KeyCode::Char('l') => {
+                cmds.push(InputCommand::OnceRight);
+            },
+
+            xEvent::KeyCode::Char('1') => {
+                cmds.push(InputCommand::TypeDigital('1'));
+            },
+            xEvent::KeyCode::Char('2') => {
+                cmds.push(InputCommand::TypeDigital('2'));
+            },
+            xEvent::KeyCode::Char('3') => {
+                cmds.push(InputCommand::TypeDigital('3'));
+            },
+            xEvent::KeyCode::Char('4') => {
+                cmds.push(InputCommand::TypeDigital('4'));
+            },
+
+            _ => (),
+        }
     }
 
     (cmds, restart)

@@ -1,4 +1,5 @@
 mod world_wrapper;
+pub mod error;
 
 //  //  //  //  //  //  //  //
 pub mod prelude {
