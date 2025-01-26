@@ -6,7 +6,49 @@ impl PartialEq for super::RaaWorld {
 }
 impl std::fmt::Debug for super::RaaWorld {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "RaaWorld has {} entities", self.world.len())
+        match self.world.len() {
+            0 => write!(f, "there is no entity"),
+            1 => write!(f, "there is 1 entity"),
+            n => write!(f, "there are {} entities", n),
+        }
     }
 }
 
+//  //  //  //  //  //  //  //
+//        TEST              //
+//  //  //  //  //  //  //  //
+#[cfg(test)]
+mod base_test {
+    use crate::prelude::*;
+
+    #[test]
+    fn a_few() {
+        let mut world = RaaWorld::new();
+        world.world.spawn( (true, 25));
+        world.world.spawn( (4., 5));
+        world.world.spawn( (false, 25.));
+
+        let s = "there are 3 entities";
+        let r = format!("{:?}", world);
+        assert!(r == s);
+    }
+
+    #[test]
+    fn single() {
+        let mut world = RaaWorld::new();
+        world.world.spawn( (true, 25));
+
+        let s = "there is 1 entity";
+        let r = format!("{:?}", world);
+        assert!(r == s);
+    }
+
+    #[test]
+    fn empty() {
+        let world = RaaWorld::new();
+
+        let s = "there is no entity";
+        let r = format!("{:?}", world);
+        assert!(r == s);
+    }
+}

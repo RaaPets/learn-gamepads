@@ -1,6 +1,6 @@
-use std::rc::Rc;
 use ratatui::prelude::*;
 use ratatui::widgets::*;
+use std::rc::Rc;
 use Constraint::*;
 
 use super::AppState;
@@ -21,13 +21,16 @@ pub fn view(app_state: &AppState, area: Rect, buf: &mut Buffer) {
     }
 
     if let AppState::Working(working) = app_state {
-        StatusAreaWidget(working.is_gamepad_connected).render(status_area, buf);
+        let [status_joy, _, status_world, _] =
+            Layout::horizontal([Min(10), Length(2), Min(10), Min(1)]).areas(status_area);
+        StatusJoyWidget(working.is_gamepad_connected).render(status_joy, buf);
+        StatusWorldWidget(format!("{:?}", working.world)).render(status_world, buf);
     }
 }
 
 //  //  //  //  //  //  //  //
-struct StatusAreaWidget(Option<bool>);
-impl Widget for StatusAreaWidget {
+struct StatusJoyWidget(Option<bool>);
+impl Widget for StatusJoyWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let s = match self.0 {
             Some(true) => "gamepad connected",
@@ -38,6 +41,14 @@ impl Widget for StatusAreaWidget {
     }
 }
 
+struct StatusWorldWidget(String);
+impl Widget for StatusWorldWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        Paragraph::new(self.0).render(area, buf);
+    }
+}
+
+//  //  //  //  //  //  //  //
 struct PlaygroundWidget(Option<Rc<CellsWorld>>);
 impl Widget for PlaygroundWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
