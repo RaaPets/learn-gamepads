@@ -37,7 +37,9 @@ impl RaaWorld {
 
         self.movement_system_update();
 
-        self.collision_system();
+        self.collision_system_update();
+
+        let _ = self.pre_rendering_system_update();
 
         //despawn ToDespawn
 

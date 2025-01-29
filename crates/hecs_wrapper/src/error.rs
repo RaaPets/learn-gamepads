@@ -1,6 +1,29 @@
 use std::fmt;
 
 //  //  //  //  //  //  //  //
+pub mod pre_rendering_system {
+
+    use super::*;
+    pub type Result = std::result::Result<(), PreRenderingSystemError>;
+
+    #[derive(Debug, PartialEq, Eq)]
+    pub enum PreRenderingSystemError {
+        NoPlayerForCentering,
+        PlayerHasNoPosition,
+    }
+
+    impl std::error::Error for PreRenderingSystemError {}
+    impl fmt::Display for PreRenderingSystemError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match *self {
+                Self::NoPlayerForCentering => f.write_str("no player to centralizing positions"),
+                Self::PlayerHasNoPosition => f.write_str("impossible centralizing due to player has no position"),
+            }
+        }
+    }
+}
+
+//  //  //  //  //  //  //  //
 pub mod input_system {
 
     use super::*;

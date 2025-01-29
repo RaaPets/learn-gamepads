@@ -3,7 +3,7 @@ use arithm2d::pos2d::Pos2D;
 use super::components::*;
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
-    pub fn collision_system(&mut self) {
+    pub fn collision_system_update(&mut self) {
         let mut ent_list = Vec::new();
 
         for (id, _position) in self.world.query::<&Position>().iter() {
@@ -15,6 +15,10 @@ impl super::RaaWorld {
                 let ent_a = ent_list[primary as usize];
                 let ent_b = ent_list[secondary as usize];
 
+                    todo!(r#"
+                        1) does_pair_interract
+                        2) calc_interraction
+                        "#);
                 if let Some((mov_a, mov_b)) =
                     check_entities_for_correction(&self.world, &ent_a, &ent_b)
                 {
@@ -96,44 +100,23 @@ mod correct_bounds_test {
         assert!(check_entities_for_correction(&world.world, &pos_a, &pos_a).is_none());
     }
 
-    /*
-    #[test]
-    fn triple() {
-        let mut world = RaaWorld::new();
-        world.world.spawn((1, Position::from((2., 2.))));
-        world.world.spawn((2, Position::from((2.1, 2.))));
-        world.world.spawn((3, Position::from((5., 2.))));
-
-        world.collision_system();
-    }
-
-    #[test]
-    fn pair() {
-        let mut world = RaaWorld::new();
-        world.world.spawn((1, Position::from((2., 2.))));
-        world.world.spawn((2, Position::from((2.1, 2.))));
-
-        world.collision_system();
-    }
-    */
-
     #[test]
     fn single() {
         let mut world = RaaWorld::new();
 
         world.world.spawn((1, Position::from((2., 2.))));
-        world.collision_system();
+        world.collision_system_update();
 
         world.world.spawn((true, 25));
-        world.collision_system();
+        world.collision_system_update();
     }
 
     #[test]
     fn no_with_pos() {
         let mut world = RaaWorld::new();
-        world.collision_system();
+        world.collision_system_update();
         world.world.spawn((true, 25));
-        world.collision_system();
+        world.collision_system_update();
     }
 
     #[test]

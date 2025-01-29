@@ -1,11 +1,15 @@
 use std::rc::Rc;
 
 use super::*;
+use crate::error::pre_rendering_system;
 
 use arithm2d::pos2d::Pos2D;
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
-    pub fn render_cells(&self, width: usize, height: usize) -> Option<Rc<CellsWorld>> {
+    pub fn pre_rendering_system_update(&mut self) -> pre_rendering_system::Result {
+
+                    todo!("write simple tests");
+
         let mut player_entity = None;
         for (id, (_position, _cell_type)) in self
             .world
@@ -14,20 +18,33 @@ impl super::RaaWorld {
             player_entity = Some(id);
         }
         let Some(player_entity) = player_entity else {
-            return None;
+            return Err(pre_rendering_system::PreRenderingSystemError::NoPlayerForCentering);
         };
-        let player_position = self.world.get::<&Position>(player_entity).ok()?;
-        let center = Pos2D { x: player_position.x as isize, y: player_position.y as isize };
-        let half_width = (width / 2) as isize - 1;
-        let half_height = (height / 2) as isize - 1;
+        let player_position: Position = {
+            let Ok(position) = self.world.get::<&Position>(player_entity) else {
+                    return Err(pre_rendering_system::PreRenderingSystemError::PlayerHasNoPosition);
+            };
+            *position
+        };
 
-        let mut cells = CellsWorld::new(width, height);
+        for (_id, position) in self.world.query_mut::<&mut Position>() {
+            *position -= player_position;
+        }
+
+        Ok(())
+    }
+
+    pub fn render_cells(&self, width: isize, height: isize) -> Option<Rc<CellsWorld>> {
+        let half_width = width / 2 - 1;
+        let half_height = height / 2 - 1;
+
+        let mut cells = CellsWorld::new(width as usize, height as usize);
 
         for (_id, (cell_type, src_pos)) in &mut self.world.query::<(&CellType, &Position)>() {
             let position = Pos2D { x: src_pos.x as isize, y: src_pos.y as isize };
-            let rel_pos = position - center + (half_width, half_height).into();
+            let rel_pos = position + (half_width, half_height).into();
             let (i, j) = rel_pos.into();
-            if i >= 0 && i < (width as isize) && j>= 0 && j < (height as isize) {
+            if i >= 0 && i < width && j>= 0 && j < height {
                 cells[(i, j)] = cell_type.0;
             }
         }
