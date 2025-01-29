@@ -3,7 +3,7 @@ use crate::error::input_system::*;
 use super::components::*;
 //  //  //  //  //  //  //  //
 #[derive(Debug, PartialEq)]
-pub enum InputCommand {
+pub enum GameInputCommand {
     TypeDigital(char),
     OnceUp,
     OnceDown,
@@ -14,16 +14,16 @@ pub enum InputCommand {
 //  //  //  //  //  //  //  //
 mod with_player {
     use super::*;
-    pub(super) fn add_last(player_input: &mut player::PlayerInput, cmd: InputCommand) {
+    pub(super) fn add_last(player_input: &mut player::PlayerInput, cmd: GameInputCommand) {
         player_input.input_buffer.push_back(cmd);
     }
-    pub(super) fn take_first(player_input: &mut player::PlayerInput) -> Option<InputCommand> {
+    pub(super) fn take_first(player_input: &mut player::PlayerInput) -> Option<GameInputCommand> {
         player_input.input_buffer.pop_front()
     }
 }
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
-    pub fn send_to_player(&mut self, inputs: Vec<InputCommand>) -> Result {
+    pub fn send_to_player(&mut self, inputs: Vec<GameInputCommand>) -> Result {
         for (_id, player_input) in self.world.query_mut::<&mut player::PlayerInput>() {
             for cmd in inputs.into_iter() {
                 with_player::add_last(player_input, cmd);
@@ -51,15 +51,15 @@ impl super::RaaWorld {
 
             while let Some(cmd) = with_player::take_first(&mut player_input) {
                 match cmd {
-                    InputCommand::OnceUp => dj -= 1.,
-                    InputCommand::OnceDown => dj += 1.,
-                    InputCommand::OnceLeft => di -= 1.,
-                    InputCommand::OnceRight => di += 1.,
-                    InputCommand::Accelerate((ddi, ddj)) => {
+                    GameInputCommand::OnceUp => dj -= 1.,
+                    GameInputCommand::OnceDown => dj += 1.,
+                    GameInputCommand::OnceLeft => di -= 1.,
+                    GameInputCommand::OnceRight => di += 1.,
+                    GameInputCommand::Accelerate((ddi, ddj)) => {
                         di += (ddi as f64) / 3.5;
                         dj -= (ddj as f64) / 3.5;
                     }
-                    InputCommand::TypeDigital(ch) => last_ch = Some(ch),
+                    GameInputCommand::TypeDigital(ch) => last_ch = Some(ch),
                 }
             }
         }
@@ -93,7 +93,7 @@ mod base_test {
         world.input_system_update()?;
 
         assert!(
-            world.send_to_player(vec![InputCommand::OnceUp])
+            world.send_to_player(vec![GameInputCommand::OnceUp])
                 == Err(InputSystemError::NoPlayerToSend)
         );
         world.input_system_update()?;
@@ -103,7 +103,7 @@ mod base_test {
             .spawn((CellType(CellState::Target), Position::from_tuple((0, 0))));
         assert!(world.world.len() == 1);
         assert!(
-            world.send_to_player(vec![InputCommand::OnceUp])
+            world.send_to_player(vec![GameInputCommand::OnceUp])
                 == Err(InputSystemError::NoPlayerToSend)
         );
         world.input_system_update()?;
@@ -115,7 +115,7 @@ mod base_test {
             Position::from_tuple((7, 7)),
         ));
         assert!(world.world.len() == 2);
-        world.send_to_player(vec![InputCommand::OnceUp])?;
+        world.send_to_player(vec![GameInputCommand::OnceUp])?;
         world.input_system_update()?;
 
         Ok(())

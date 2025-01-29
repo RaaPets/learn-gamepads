@@ -18,7 +18,7 @@ pub fn execute(
 ) -> Result<()> {
     trace!("runner::execute()..");
 
-    let handler = event_handler::EventHandler::new(TICK);
+    let handler = event_handler::EventHandler::new(TICK, true);
     let mut gamepad_handler = gamepad_handler::GamepadHandler::new();
 
     let mut app_state = AppState::JustInited;

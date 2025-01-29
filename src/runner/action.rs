@@ -2,8 +2,13 @@ use ratatui::crossterm::event as xEvent;
 
 use hecs_wrapper::prelude::*;
 
+#[derive(Debug, PartialEq)]
+pub enum KeyboardInput {
+    GameRestart,
+    GameInput(GameInputCommand),
+    QuitRequest,
+}
 //  //  //  //  //  //  //  //
-//#[derive(Debug, PartialEq)]
 #[derive(Debug)]
 pub enum Action {
     // main
@@ -11,15 +16,13 @@ pub enum Action {
     Quit,
     Tick,
     TranslateRawEvent(xEvent::Event),
+    Keyboard(KeyboardInput),
 
     // append
-    GameInput(Vec<InputCommand>, bool),
+    GameInput(Vec<GameInputCommand>, bool),
     ProcessMainGamepadInput(Option<gamepads::Gamepad>),
+
     /*
-    ApplyEditedCode(bool), // is GameCode?
-    ResetCounters,
-    GameUpdate,
-    HandleByEditor(xEvent::Event),
     PopupLuaEditor,
     QueueCommand(String),
     Warning(String),

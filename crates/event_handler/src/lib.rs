@@ -16,11 +16,18 @@ pub struct EventHandler {
 }
 
 impl EventHandler {
-    pub fn new(tick_duration: std::time::Duration) -> Self {
+    pub fn new(tick_duration: std::time::Duration, press_event_only: bool) -> Self {
         let (tx, rx) = std::sync::mpsc::channel();
         let tx_clone = tx.clone();
         std::thread::spawn(move || loop {
             let raw_event = block_til_event();
+            if press_event_only == true {
+                if let Ok(xEvent::Event::Key( xEvent::KeyEvent { kind, .. } )) = raw_event {
+                    if kind != xEvent::KeyEventKind::Press {
+                        continue;
+                    }
+                }
+            }
             let result_event = preprocess_event(raw_event);
             let Ok(()) = tx.send(result_event) else {
                 return;
