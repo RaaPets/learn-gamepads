@@ -1,13 +1,16 @@
+
 use super::components::*;
+
+static zero: Position = Position { x: 0., y: 0. };
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
-    pub fn movement_system_update(&mut self) {
+    pub fn move_player_system_update(&mut self) {
         for (_id, (position, movement)) in self.world.query_mut::<(&mut Position, &Movement)>() {
             *position += movement.0;
         }
 
         for (_id, movement) in self.world.query_mut::<&mut Movement>() {
-            movement.0 = (0., 0.).into();
+            movement.0 = zero;
         }
     }
 }
@@ -26,16 +29,16 @@ mod base_test {
         let mut world = RaaWorld::new();
         assert!(world.world.len() == 0);
 
-        world.movement_system_update();
+        world.move_player_system_update();
         world.input_system_update()?;
-        world.movement_system_update();
+        world.move_player_system_update();
 
         world
             .world
             .spawn((CellType(CellState::Target), Position::from_tuple((0, 0))));
         assert!(world.world.len() == 1);
         world.input_system_update()?;
-        world.movement_system_update();
+        world.move_player_system_update();
 
         world.world.spawn((
             CellType(CellState::Player),
@@ -46,7 +49,7 @@ mod base_test {
         assert!(world.world.len() == 2);
         world.send_to_player(vec![GameInputCommand::OnceUp])?;
         world.input_system_update()?;
-        world.movement_system_update();
+        world.move_player_system_update();
 
         Ok(())
     }

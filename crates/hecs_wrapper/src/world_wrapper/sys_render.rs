@@ -8,7 +8,7 @@ use arithm2d::pos2d::Pos2D;
 impl super::RaaWorld {
     pub fn pre_rendering_system_update(&mut self) -> pre_rendering_system::Result {
 
-                    todo!("write simple tests");
+        // TODO: needs tests. at least simplest
 
         let mut player_entity = None;
         for (id, (_position, _cell_type)) in self

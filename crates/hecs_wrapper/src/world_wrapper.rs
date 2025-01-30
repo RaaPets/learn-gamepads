@@ -5,7 +5,7 @@ use cells_world::*;
 
 pub mod components;
 pub mod sys_input;
-pub mod sys_movement;
+pub mod sys_player_movement;
 pub mod sys_collision;
 pub mod sys_render;
 mod utils;
@@ -14,6 +14,7 @@ use components::*;
 
 //  //  //  //  //  //  //  //
 pub struct RaaWorld {
+    counter: u64,
     pub(crate) _space_size: i32,
     pub(crate) world: World,
 }
@@ -27,15 +28,18 @@ impl RaaWorld {
         let world = World::new();
 
         Self {
+            counter: 0,
             _space_size: space_size.into(),
             world,
         }
     }
 
     pub fn update_on_tick(&mut self) -> Result<()> {
+        self.counter += 1;
+
         self.input_system_update()?;
 
-        self.movement_system_update();
+        self.move_player_system_update();
 
         self.collision_system_update();
 
