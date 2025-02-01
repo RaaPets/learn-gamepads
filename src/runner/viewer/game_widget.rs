@@ -4,9 +4,6 @@ static empty_bg: Color = Color::Rgb(8, 8, 8);
 static red_empty_bg: Color = Color::Rgb(64, 8, 8);
 #[allow(non_upper_case_globals)]
 static obstacle_bg: Color = Color::Rgb(64, 64, 64);
-#[allow(non_upper_case_globals)]
-static char_bg: Color = Color::Rgb(0, 0, 64);
-
 
 use ratatui::prelude::*;
 use ratatui::widgets::Block;
@@ -55,7 +52,10 @@ impl Widget for GameCellWG {
                 buf[right].set_char('-').set_bg(red_empty_bg);
             }
             CellState::Player => {
-                buf[center].set_char('*').set_bg(empty_bg).set_fg(Color::Green);
+                buf[center]
+                    .set_char('*')
+                    .set_bg(empty_bg)
+                    .set_fg(Color::Green);
                 buf[left].set_char('[').set_bg(empty_bg);
                 buf[right].set_char(']').set_bg(empty_bg);
             }
@@ -73,6 +73,24 @@ impl Widget for GameCellWG {
                 buf[right].set_char(' ').set_bg(obstacle_bg);
             }
             CellState::SomeChar(ch) => {
+                let char_bg: Color;
+                match ch {
+                    '1' => {
+                        char_bg = Color::Rgb(64, 16, 16);
+                    }
+                    '2' => {
+                        char_bg = Color::Rgb(64, 64, 0);
+                    }
+                    '3' => {
+                        char_bg = Color::Rgb(16, 64, 16);
+                    }
+                    '4' => {
+                        char_bg = Color::Rgb(0, 64, 64);
+                    }
+                    _ => {
+                        char_bg = Color::Rgb(0, 0, 64);
+                    }
+                }
                 buf[center].set_char(ch).set_bg(char_bg);
                 buf[left].set_char(' ').set_bg(char_bg);
                 buf[right].set_char(' ').set_bg(char_bg);

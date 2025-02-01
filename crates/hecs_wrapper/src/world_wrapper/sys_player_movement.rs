@@ -1,7 +1,7 @@
 
 use super::components::*;
 
-static zero: Position = Position { x: 0., y: 0. };
+static ZERO: Position = Position { x: 0., y: 0. };
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
     pub fn move_player_system_update(&mut self) {
@@ -10,7 +10,7 @@ impl super::RaaWorld {
         }
 
         for (_id, movement) in self.world.query_mut::<&mut Movement>() {
-            movement.0 = zero;
+            movement.0 = ZERO;
         }
     }
 }
