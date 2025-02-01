@@ -5,91 +5,93 @@ use raalog::{debug, error, info, trace, warn};
 
 use super::action::KeyboardInput;
 use super::Action;
+use super::Action::*;
 use super::AppState;
-use super::WorkingParams;
+use super::AppState::*;
+use super::WorkingState;
 use hecs_wrapper::error::input_system;
 use hecs_wrapper::prelude::*;
 
 //  //  //  //  //  //  //  //
 pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)> {
     match (state, with_action) {
-        (AppState::JustInited, Action::Tick) => {
+        (JustInited, Tick) => {
             let mut world = Box::new(RaaWorld::new());
             world.repopulate();
             world.update_on_tick()?;
 
-            let new_state = AppState::Working(WorkingParams {
+            let new_state = Working(WorkingState {
                 is_gamepad_connected: None,
                 world,
             });
-            return Ok((new_state, Action::Noop));
+            return Ok((new_state, Noop));
         }
-        (AppState::Working(mut working), Action::Tick) => {
-            working.world.update_on_tick()?;
-            let new_state = AppState::Working(working);
-            return Ok((new_state, Action::Noop));
+        (Working(mut work_state), Tick) => {
+            work_state.world.update_on_tick()?;
+            let new_state = Working(work_state);
+            return Ok((new_state, Noop));
         }
-        (AppState::Working(mut working), Action::GameInput(input, restart)) => {
+        (Working(mut work_state), GameInput(input, restart)) => {
             if restart {
-                return Ok((AppState::JustInited, Action::Noop));
+                return Ok((JustInited, Noop));
             }
-            if working.world.send_to_player(input)
+            if work_state.world.send_to_player(input)
                 == Err(input_system::InputSystemError::NoPlayerToSend)
             {
                 warn!("{}", input_system::InputSystemError::NoPlayerToSend);
             }
-            let new_state = AppState::Working(working);
-            return Ok((new_state, Action::Noop));
+            let new_state = Working(work_state);
+            return Ok((new_state, Noop));
         }
-        (AppState::Working(mut working), Action::ProcessMainGamepadInput(None)) => {
-            working.is_gamepad_connected = Some(false);
-            let new_state = AppState::Working(working);
-            return Ok((new_state, Action::Noop));
+        (Working(mut work_state), ProcessMainGamepadInput(None)) => {
+            work_state.is_gamepad_connected = Some(false);
+            let new_state = Working(work_state);
+            return Ok((new_state, Noop));
         }
-        (AppState::Working(mut working), Action::ProcessMainGamepadInput(Some(gamepad))) => {
-            working.is_gamepad_connected = Some(true);
-            let new_state = AppState::Working(working);
+        (Working(mut work_state), ProcessMainGamepadInput(Some(gamepad))) => {
+            work_state.is_gamepad_connected = Some(true);
+            let new_state = Working(work_state);
             let (input, restart) = translate_gamepad(&gamepad);
-            return Ok((new_state, Action::GameInput(input, restart)));
+            return Ok((new_state, GameInput(input, restart)));
         }
-        (AppState::Working(working), Action::TranslateRawEvent(ev)) => {
-            if let Some(true) = &working.is_gamepad_connected {
-                let new_state = AppState::Working(working);
-                return Ok((new_state, Action::Noop));
+        (Working(work_state), TranslateRawEvent(ev)) => {
+            if let Some(true) = &work_state.is_gamepad_connected {
+                let new_state = Working(work_state);
+                return Ok((new_state, Noop));
             }
-            let new_state = AppState::Working(working);
+            let new_state = Working(work_state);
             match translate_keyboard(ev) {
                 None => {
-                    return Ok((new_state, Action::Noop));
+                    return Ok((new_state, Noop));
                 }
                 Some(kbd_inpt) => {
-                    return Ok((new_state, Action::Keyboard(kbd_inpt)));
+                    return Ok((new_state, Keyboard(kbd_inpt)));
                 }
             }
         }
-        (AppState::Working(mut working), Action::Keyboard(kbd)) => match kbd {
+        (Working(mut work_state), Keyboard(kbd)) => match kbd {
             KeyboardInput::QuitRequest => {
-                let new_state = AppState::Working(working);
-                return Ok((new_state, Action::Quit));
+                let new_state = Working(work_state);
+                return Ok((new_state, Quit));
             }
             KeyboardInput::GameRestart => {
-                return Ok((AppState::JustInited, Action::Noop));
+                return Ok((JustInited, Noop));
             }
             KeyboardInput::GameInput(game_input_command) => {
-                if working.world.send_to_player(vec![game_input_command])
+                if work_state.world.send_to_player(vec![game_input_command])
                     == Err(input_system::InputSystemError::NoPlayerToSend)
                 {
                     warn!("{}", input_system::InputSystemError::NoPlayerToSend);
                 }
-                let new_state = AppState::Working(working);
-                return Ok((new_state, Action::Noop));
+                let new_state = Working(work_state);
+                return Ok((new_state, Noop));
             }
         },
-        (_, Action::Quit) => {
-            return Ok((AppState::Exiting, Action::Noop));
+        (_, Quit) => {
+            return Ok((Exiting, Noop));
         }
         (state_out, _) => {
-            return Ok((state_out, Action::Noop));
+            return Ok((state_out, Noop));
         }
     }
 }
