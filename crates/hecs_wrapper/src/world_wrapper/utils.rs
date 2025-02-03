@@ -1,10 +1,12 @@
+use super::*;
+
 //  //  //  //  //  //  //  //
-impl PartialEq for super::RaaWorld {
+impl PartialEq for RaaWorld {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(self, other)
     }
 }
-impl std::fmt::Debug for super::RaaWorld {
+impl std::fmt::Debug for RaaWorld {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self.world.len() {
             0 => write!(f, "there is no entity"),
@@ -19,7 +21,7 @@ impl std::fmt::Debug for super::RaaWorld {
 //  //  //  //  //  //  //  //
 #[cfg(test)]
 mod base_test {
-    use crate::prelude::*;
+    use super::*;
 
     #[test]
     fn a_few() {

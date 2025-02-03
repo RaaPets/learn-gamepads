@@ -1,6 +1,7 @@
 use std::fmt;
 
 //  //  //  //  //  //  //  //
+/*
 pub mod pre_rendering_system {
 
     use super::*;
@@ -22,6 +23,7 @@ pub mod pre_rendering_system {
         }
     }
 }
+*/
 
 //  //  //  //  //  //  //  //
 pub mod input_system {
@@ -42,12 +44,4 @@ pub mod input_system {
             }
         }
     }
-
-    /*
-    impl From(hecs::NoSuchEntity) InputSystemError {
-        fn from(src: hecs::NoSuchEntity) -> Self {
-
-        }
-    }
-    */
 }

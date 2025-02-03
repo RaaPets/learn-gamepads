@@ -5,6 +5,7 @@ mod unic_pairs;
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
     pub fn collision_system_update(&mut self) {
+        return;
         let unic_paris = {
             let mut ent_list = Vec::new();
             for (id, _position) in self.world.query::<&Position>().iter() {
