@@ -7,6 +7,14 @@ pub struct Pos2D<V> {
     pub y: V,
 }
 //  //  //  //  //  //  //  //
+impl<V> Pos2D<V> {
+    pub fn new(x: V, y: V) -> Self {
+        Self {
+            x,
+            y,
+        }
+    }
+}
 
 //  //  //  //  //  //  //  //
 impl<V: std::cmp::PartialEq> PartialEq for Pos2D<V> {

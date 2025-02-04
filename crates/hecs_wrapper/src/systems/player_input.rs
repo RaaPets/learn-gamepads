@@ -2,14 +2,8 @@ use super::*;
 use player::GameInputCommand;
 
 //  //  //  //  //  //  //  //
-pub(crate) fn clear(players: hecs::QueryMut<&mut PlayerInput>) {
-    for (_id, input) in players {
-        input.clear();
-    }
-}
-
-pub(crate) fn update(players: hecs::QueryMut<(&mut Position, &PlayerInput)>) -> Option<Position> {
-    let mut first_player_position = None;
+pub(crate) fn update(players: hecs::QueryMut<(&mut Position, &mut PlayerInput)>) -> Option<char> {
+    let mut res_char = None;
 
     for (_id, (position, input)) in players {
         let mut di = 0.;
@@ -26,17 +20,17 @@ pub(crate) fn update(players: hecs::QueryMut<(&mut Position, &PlayerInput)>) -> 
                     dj -= (*ddj as f64) / 3.5;
                 }
                 GameInputCommand::TypeDigital(ch) => {
-                    last_ch = Some(ch);
-                    todo!("TypeDigital({})", ch);
+                    last_ch = Some(*ch);
                 }
             }
         }
-        *position += Position::from_tuple((di, dj));
-        if first_player_position.is_none() {
-            first_player_position = Some(*position);
+        *position += Position::new(di, dj);
+        if res_char.is_none() {
+            res_char = last_ch;
         }
+        input.clear();
     }
-    first_player_position
+    res_char
 }
 
 //  //  //  //  //  //  //  //
@@ -46,8 +40,8 @@ pub(crate) fn update(players: hecs::QueryMut<(&mut Position, &PlayerInput)>) -> 
 mod player_input_test {
     use super::*;
 
-    fn invoke_update(world: &mut hecs::World) -> Option<Position> {
-        update(world.query_mut::<(&mut Position, &player::PlayerInput)>())
+    fn invoke_update(world: &mut hecs::World) -> Option<char> {
+        update(world.query_mut::<(&mut Position, &mut player::PlayerInput)>())
     }
 
     #[test]
@@ -66,18 +60,16 @@ mod player_input_test {
         {
             let mut p_input = PlayerInput::new();
             p_input.add_last(GameInputCommand::TypeDigital('1'));
-            let pos = Position::from((2., 5.));
             let _ = world.insert_one(player, p_input);
-            let _ = world.insert_one(player, pos);
+            let _ = world.insert_one(player, Position::default());
             //
-            let p = invoke_update(&mut world);
-            let pos2 = Position::from((2., 4.));
-            assert!(p == Some(pos2));
+            let inp = invoke_update(&mut world);
+            assert!(inp == Some('1'));
         }
     }
 
     #[test]
-    fn once_move_player() {
+    fn once_move_player() ->  eyre::Result<()> {
         let mut world = hecs::World::new();
         {
             let p = invoke_update(&mut world);
@@ -86,19 +78,26 @@ mod player_input_test {
 
         let player = world.spawn((false, 1));
         {
-            let p = invoke_update(&mut world);
+            let p = world.get::<&Position>(player);
+            assert!(p.is_err());
+        }
+        {
+            let _ = invoke_update(&mut world);
+            let p = crate::world_wrapper::central_position::get_from_first(
+                world.query::<(&CentralEntity, &CellPosition)>()
+            );
             assert!(p == None);
         }
         {
             let mut p_input = PlayerInput::new();
             p_input.add_last(GameInputCommand::OnceUp);
-            let pos = Position::from((2., 5.));
+            let pos = Position::new(2., 5.);
             let _ = world.insert_one(player, p_input);
             let _ = world.insert_one(player, pos);
             //
-            let p = invoke_update(&mut world);
-            let pos2 = Position::from((2., 4.));
-            assert!(p == Some(pos2));
+            let _ = invoke_update(&mut world);
+            let p = world.get::<&Position>(player)?;
+            assert!(*p == Position::new(2., 4.));
         }
         {
             let mut p_input = PlayerInput::new();
@@ -108,9 +107,9 @@ mod player_input_test {
             let _ = world.insert_one(player, p_input);
             let _ = world.insert_one(player, pos);
             //
-            let p = invoke_update(&mut world);
-            let pos2 = Position::from((1., 6.));
-            assert!(p == Some(pos2));
+            let _ = invoke_update(&mut world);
+            let p = world.get::<&Position>(player)?;
+            assert!(*p == Position::new(1., 6.));
         }
         {
             let mut p_input = PlayerInput::new();
@@ -120,9 +119,11 @@ mod player_input_test {
             let _ = world.insert_one(player, p_input);
             let _ = world.insert_one(player, pos);
             //
-            let p = invoke_update(&mut world);
-            let pos2 = Position::from((3., 4.));
-            assert!(p == Some(pos2));
+            let _ = invoke_update(&mut world);
+            let p = world.get::<&Position>(player)?;
+            assert!(*p == Position::new(3., 4.));
         }
+
+        Ok(())
     }
 }

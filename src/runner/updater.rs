@@ -18,7 +18,7 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
         (JustInited, Tick) => {
             let mut world = Box::new(RaaWorld::new());
             world.repopulate();
-            world.update_on_tick()?;
+            world.update_on_tick(super::DELTA_TIME)?;
 
             let new_state = Working(WorkingState {
                 is_gamepad_connected: None,
@@ -27,7 +27,7 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
             return Ok((new_state, Noop));
         }
         (Working(mut work_state), Tick) => {
-            work_state.world.update_on_tick()?;
+            work_state.world.update_on_tick(super::DELTA_TIME)?;
             let new_state = Working(work_state);
             return Ok((new_state, Noop));
         }

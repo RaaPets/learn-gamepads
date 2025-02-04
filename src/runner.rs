@@ -11,6 +11,7 @@ mod app_state;
 use app_state::*;
 
 static TICK: std::time::Duration = std::time::Duration::from_millis(20);
+pub(crate) static DELTA_TIME: f64 = 0.02;
 
 //  //  //  //  //  //  //  //
 pub fn execute(
@@ -22,9 +23,16 @@ pub fn execute(
     let mut gamepad_handler = gamepad_handler::GamepadHandler::new();
 
     let mut app_state = AppState::JustInited;
+
+    let mut debug_text = String::new();
     while !&app_state.is_exiting() {
+        if let AppState::Working(w) = &app_state {
+            debug_text = w.world.debug_info();
+        } else {
+            debug_text = "-".into();
+        }
         // DRAW
-        terminal.draw(|frame| viewer::view(&app_state, frame.area(), frame.buffer_mut()))?;
+        terminal.draw(|frame| viewer::view(&debug_text, &app_state, frame.area(), frame.buffer_mut()))?;
 
         // UPDATE
         //      get inputs

@@ -6,8 +6,13 @@ pub struct CellType(pub CellState);
 
 //  //  //  //  //  //  //  //
 use arithm2d::pos2d;
+
+pub struct CentralEntity;
+pub type CellPosition = pos2d::Pos2D<isize>;
+
 pub type Position = pos2d::Pos2D<f64>;
 pub struct Movement(pub pos2d::Pos2D<f64>);
+pub struct Velocity(pub pos2d::Pos2D<f64>);
 
 //  //  //  //  //  //  //  //
 pub mod player {
@@ -41,7 +46,7 @@ pub mod player {
         pub(crate) fn add_last(&mut self, cmd: GameInputCommand) {
             self.input_buffer.push_back(cmd);
         }
-        pub(crate) fn take_first(&mut self) -> Option<GameInputCommand> {
+        pub(crate) fn _take_first(&mut self) -> Option<GameInputCommand> {
             self.input_buffer.pop_front()
         }
     }

@@ -9,15 +9,21 @@ use cells_world::CellsWorld;
 mod game_widget;
 
 //  //  //  //  //  //  //  //
-pub fn view(app_state: &AppState, area: Rect, buf: &mut Buffer) {
-    let [_top_area, game_area, status_area] =
-        Layout::vertical([Length(4), Min(35), Min(4)]).areas(area);
+pub fn view(debug_text: &str, app_state: &AppState, area: Rect, buf: &mut Buffer) {
+    let [_top_area, all_game_area, status_area] =
+        Layout::vertical([Length(1), Min(35), Min(4)]).areas(area);
 
-    if let AppState::Working(working) = app_state {
-        let cells = working.world.render_cells(16, 16);
-        PlaygroundWidget(cells).render(game_area, buf);
-    } else {
-        PlaygroundWidget(None).render(game_area, buf);
+    {
+        let [game_area, debug_info_area] =
+            Layout::horizontal([Min(35), Min(1)]).areas(all_game_area);
+
+        if let AppState::Working(working) = app_state {
+            let cells = working.world.render_cells(16, 16);
+            PlaygroundWidget(cells).render(game_area, buf);
+        } else {
+            PlaygroundWidget(None).render(game_area, buf);
+        }
+        Paragraph::new(debug_text).render(debug_info_area, buf);
     }
 
     if let AppState::Working(working) = app_state {
