@@ -25,8 +25,30 @@ impl RaaWorld {
 
     #[inline(always)]
     fn update_world(world: &mut hecs::World, delta_time_secs: f64, rnd: u64) {
-        let _res_char =
-            systems::player_input::update(world.query_mut::<(&mut Position, &mut PlayerInput)>());
+        let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
+        let res_char = systems::player_input::update(input_query.query_mut(world));
+
+        systems::collision::update(world.query_mut::<(&mut Movement, &CellPosition)>(), rnd);
+
+        systems::velocity::update(
+            world.query_mut::<(&mut Movement, &Velocity)>(),
+            delta_time_secs,
+        );
+        systems::movement::update(world.query_mut::<(&mut Position, &mut Movement)>());
+
+        systems::position_to_cell::update(world.query_mut::<(&mut CellPosition, &mut Position)>());
+
+        let central_cell =
+            central_position::get_from_first(world.query::<(&CentralEntity, &CellPosition)>());
+        systems::center_on_position::update(world.query_mut::<&mut CellPosition>(), central_cell);
+        if let Some(ch) = res_char {
+            let _ = world.spawn((
+                CellType(CellState::SomeChar(ch)),
+                CellPosition::new(0, -1),
+                Position::default(),
+                Movement(Position::default()),
+            ));
+        }
 
         /*
         if let Some((pos, Some(ch))) = after_input {
@@ -39,17 +61,6 @@ impl RaaWorld {
         ));
         }
         */
-
-        systems::collision::update(world.query_mut::<(&mut Movement, &Position)>(), rnd);
-
-        //systems::velocity::update(world.query_mut::<(&mut Movement, &Velocity)>(), delta_time_secs);
-        systems::movement::update(world.query_mut::<(&mut Position, &mut Movement)>());
-
-        systems::position_to_cell::update(world.query_mut::<(&mut CellPosition, &mut Position)>());
-
-        //let central_cell = find_center_cell(&world);
-        let central_cell = central_position::get_from_first(world.query::<(&CentralEntity, &CellPosition)>());
-        systems::center_on_position::update(world.query_mut::<&mut CellPosition>(), central_cell);
     }
 
     pub fn debug_info(&self) -> String {
@@ -80,11 +91,12 @@ impl RaaWorld {
             CellPosition::new(7, 7),
             Position::default(),
             Movement(Position::default()),
+            CentralEntity,
         ));
 
-        let _target0 = world.spawn((CellType(CellState::Target), Position::from_tuple((0, 0))));
+        let _target0 = world.spawn((CellType(CellState::Target), CellPosition::new(0, 0)));
         let _char = world.spawn((
-            CellType(CellState::SomeChar('2')),
+            CellType(CellState::SomeChar('4')),
             CellPosition::new(1, 1),
             Position::default(),
             Movement(Position::default()),
@@ -92,7 +104,7 @@ impl RaaWorld {
         ));
         let _target1 = world.spawn((
             CellType(CellState::Target),
-            Position::from_tuple((19, 19)),
+            CellPosition::new(19, 19),
             Movement(Position::default()),
         ));
         let _obstacle = world.spawn((

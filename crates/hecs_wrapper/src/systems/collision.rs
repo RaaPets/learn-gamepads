@@ -2,7 +2,7 @@ use super::*;
 
 //mod unic_pairs;
 //  //  //  //  //  //  //  //
-pub(crate) fn update(items: hecs::QueryMut<(&mut Movement, &Position)>, counter: u64) {
+pub(crate) fn update(items: hecs::QueryMut<(&mut Movement, &CellPosition)>, counter: u64) {
     let mut list: Vec<_> = items.into_iter().collect();
     let n = list.len();
     if n < 2 {
@@ -10,22 +10,27 @@ pub(crate) fn update(items: hecs::QueryMut<(&mut Movement, &Position)>, counter:
     }
     for alpha in 0..(n - 1) {
         for betta in alpha..n {
-            let counter_pos = list[betta].1 .1;
             let pos = list[alpha].1 .1;
-            let delta = *pos - *counter_pos;
+            let counter_pos = list[betta].1 .1;
+            let CellPosition { x, y } = *pos - *counter_pos;
+            let delta = Position::new(x as f64, y as f64);
             let scalar_x = delta.x.abs();
             let scalar_y = delta.y.abs();
-            let scalar = if scalar_x > scalar_y { scalar_x } else { scalar_y };
-            if scalar >= 1.0 {
+            let scalar = if scalar_x > scalar_y {
+                scalar_x
+            } else {
+                scalar_y
+            };
+            if scalar >= 1. {
                 continue;
             } else {
                 if scalar > 0. {
                     list[alpha].1 .0 .0 += delta;
-                    list[betta].1.0.0 -= delta;
+                    list[betta].1 .0 .0 -= delta;
                 } else {
                     let r_delta = rnd_delta(counter);
                     list[alpha].1 .0 .0 += r_delta;
-                    list[betta].1.0.0 -= r_delta;
+                    list[betta].1 .0 .0 -= r_delta;
                 }
             }
         }
@@ -33,16 +38,18 @@ pub(crate) fn update(items: hecs::QueryMut<(&mut Movement, &Position)>, counter:
     }
 }
 
+const O: f64 = 0.0;
+const I: f64 = 0.3;
 fn rnd_delta(rnd: u64) -> Position {
     match rnd & 7 {
-        0 => (0.0, 0.1).into(),
-        1 => (0.1, 0.1).into(),
-        2 => (0.1, 0.0).into(),
-        3 => (0.1, -0.1).into(),
-        4 => (0.0, -0.1).into(),
-        5 => (-0.1, -0.1).into(),
-        6 => (-0.1, 0.0).into(),
-        _ => (-0.1, 0.1).into(),
+        0 => (O, I).into(),
+        1 => (I, I).into(),
+        2 => (I, O).into(),
+        3 => (I, -I).into(),
+        4 => (O, -I).into(),
+        5 => (-I, -I).into(),
+        6 => (-I, O).into(),
+        _ => (-I, I).into(),
     }
 }
 /*

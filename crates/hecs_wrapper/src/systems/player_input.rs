@@ -2,7 +2,7 @@ use super::*;
 use player::GameInputCommand;
 
 //  //  //  //  //  //  //  //
-pub(crate) fn update(players: hecs::QueryMut<(&mut Position, &mut PlayerInput)>) -> Option<char> {
+pub(crate) fn update(players: hecs::PreparedQueryIter<(&mut Position, &mut PlayerInput)>) -> Option<char> {
     let mut res_char = None;
 
     for (_id, (position, input)) in players {
@@ -41,7 +41,8 @@ mod player_input_test {
     use super::*;
 
     fn invoke_update(world: &mut hecs::World) -> Option<char> {
-        update(world.query_mut::<(&mut Position, &mut player::PlayerInput)>())
+        let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
+        update(input_query.query_mut(world))
     }
 
     #[test]

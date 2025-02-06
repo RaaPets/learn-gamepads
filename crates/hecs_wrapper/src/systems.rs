@@ -13,22 +13,184 @@ pub mod position_to_cell {
 
     pub(crate) fn update(positions: hecs::QueryMut<(&mut CellPosition, &mut Position)>) {
         for (_id, (cell_pos, part_pos)) in positions {
-            if part_pos.x >= 1. {
-                cell_pos.x += 1;
-                part_pos.x -= 1.;
-            }
-            if part_pos.y >= 1. {
-                cell_pos.y += 1;
-                part_pos.y -= 1.;
-            }
-            if part_pos.x <= -1. {
-                cell_pos.x -= 1;
-                part_pos.x += 1.;
-            }
-            if part_pos.y <= -1. {
-                cell_pos.y -= 1;
-                part_pos.y += 1.;
-            }
+            process_position(cell_pos, part_pos);
+        }
+    }
+
+    fn process_position(cell_pos: &mut CellPosition, part_pos: &mut Position) {
+        if part_pos.x >= 1. {
+            part_pos.x -= 1.;
+            cell_pos.x += 1;
+        }
+        if part_pos.y >= 1. {
+            part_pos.y -= 1.;
+            cell_pos.y += 1;
+        }
+        if part_pos.x <= -1. {
+            part_pos.x += 1.;
+            cell_pos.x -= 1;
+        }
+        if part_pos.y <= -1. {
+            part_pos.y += 1.;
+            cell_pos.y -= 1;
+        }
+    }
+
+    //  //  //  //  //  //  //  //
+    //        TEST              //
+    //  //  //  //  //  //  //  //
+    #[cfg(test)]
+    mod process_position_test {
+        use super::*;
+
+        #[test]
+        fn changed_2() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(-2.9, -2.9);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(1, 5));
+            assert!(part_pos == Position::new(-1.9, -1.9));
+        }
+        #[test]
+        fn changed_1() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(2.9, 2.9);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(3, 7));
+            assert!(part_pos == Position::new(1.9, 1.9));
+        }
+
+        #[test]
+        fn changed_yy_a2() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(0.2, -1.7);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(2, 5));
+            assert!(part_pos == Position::new(0.2, -0.7));
+        }
+        #[test]
+        fn changed_yy_a1() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(0.2, 1.7);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(2, 7));
+            assert!(part_pos == Position::new(0.2, 0.7));
+        }
+
+        #[test]
+        fn changed_xx_a_2() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(-1.7, -0.4);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(1, 6));
+            assert!(part_pos == Position::new(-0.7, -0.4));
+        }
+        #[test]
+        fn changed_xx_a_1() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(1.7, -0.4);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(3, 6));
+            assert!(part_pos == Position::new(0.7, -0.4));
+        }
+
+        #[test]
+        fn changed_yy_2() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(0.2, -1.);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(2, 5));
+            assert!(part_pos == Position::new(0.2, 0.));
+        }
+        #[test]
+        fn changed_yy_1() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(0.2, 1.);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(2, 7));
+            assert!(part_pos == Position::new(0.2, 0.));
+        }
+
+        #[test]
+        fn changed_xx_2() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(-1., -0.4);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(1, 6));
+            assert!(part_pos == Position::new(0., -0.4));
+        }
+        #[test]
+        fn changed_xx_1() {
+            let mut cell_pos = CellPosition::new(2, 6);
+            let mut part_pos = Position::new(1., -0.4);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(3, 6));
+            assert!(part_pos == Position::new(0., -0.4));
+        }
+
+        #[test]
+        fn not_changed_3() {
+            let mut cell_pos = CellPosition::new(5, 6);
+            let mut part_pos = Position::new(0.2, -0.4);
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(5, 6));
+            assert!(part_pos == Position::new(0.2, -0.4));
+        }
+
+        #[test]
+        fn not_changed_2() {
+            let mut cell_pos = CellPosition::new(5, 6);
+            let mut part_pos = Position::default();
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos == CellPosition::new(5, 6));
+            assert!(part_pos == Position::default());
+        }
+
+        #[test]
+        fn not_changed_1() {
+            let mut cell_pos = CellPosition::default();
+            let mut part_pos = Position::default();
+
+            process_position(&mut cell_pos, &mut part_pos);
+
+            assert!(cell_pos.x == 0);
+            assert!(cell_pos.y == 0);
+            assert!(part_pos.x == 0.);
+            assert!(part_pos.y == 0.);
+        }
+
+        #[test]
+        fn chek_defaults() {
+            let cell_pos = CellPosition::default();
+            let part_pos = Position::default();
+            assert!(cell_pos.x == 0);
+            assert!(cell_pos.y == 0);
+            assert!(part_pos.x == 0.);
+            assert!(part_pos.y == 0.);
         }
     }
 }
@@ -37,7 +199,10 @@ pub mod position_to_cell {
 pub mod center_on_position {
     use super::*;
 
-    pub(crate) fn update(positions: hecs::QueryMut<&mut CellPosition>, position: Option<CellPosition>) {
+    pub(crate) fn update(
+        positions: hecs::QueryMut<&mut CellPosition>,
+        position: Option<CellPosition>,
+    ) {
         if let Some(central_cell) = position {
             for (_id, cell_pos) in positions {
                 *cell_pos -= central_cell;
