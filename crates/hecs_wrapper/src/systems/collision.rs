@@ -34,12 +34,11 @@ pub(crate) fn update(items: hecs::QueryMut<(&mut Movement, &CellPosition)>, coun
                 }
             }
         }
-        //
     }
 }
 
 const O: f64 = 0.0;
-const I: f64 = 0.3;
+const I: f64 = 0.95;
 fn rnd_delta(rnd: u64) -> Position {
     match rnd & 7 {
         0 => (O, I).into(),

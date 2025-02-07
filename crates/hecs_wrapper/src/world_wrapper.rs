@@ -2,6 +2,7 @@ use crate::prelude::*;
 use cells_world::*;
 
 pub(crate) mod central_position;
+mod create_entity;
 mod render_cells;
 mod send_to_player;
 mod utils;
@@ -42,25 +43,8 @@ impl RaaWorld {
             central_position::get_from_first(world.query::<(&CentralEntity, &CellPosition)>());
         systems::center_on_position::update(world.query_mut::<&mut CellPosition>(), central_cell);
         if let Some(ch) = res_char {
-            let _ = world.spawn((
-                CellType(CellState::SomeChar(ch)),
-                CellPosition::new(0, -1),
-                Position::default(),
-                Movement(Position::default()),
-            ));
+            Self::spawn_char(world, ch, (0, -1));
         }
-
-        /*
-        if let Some((pos, Some(ch))) = after_input {
-        let new_pos = pos + Position::from((0., -1.));
-        let _ = world.spawn((
-            CellType(CellState::SomeChar(ch)),
-            new_pos,
-            Movement(Position::from((0., 0.))),
-            Velocity(Position::from((0., 0.0))),
-        ));
-        }
-        */
     }
 
     pub fn debug_info(&self) -> String {
@@ -74,44 +58,5 @@ impl RaaWorld {
         }
 
         info
-    }
-}
-
-//  //  //  //  //  //  //  //
-//  //  //  //  //  //  //  //
-impl RaaWorld {
-    pub fn repopulate(&mut self) {
-        let world = &mut self.world;
-
-        world.clear();
-
-        let _player = world.spawn((
-            CellType(CellState::Player),
-            player::PlayerInput::new(),
-            CellPosition::new(7, 7),
-            Position::default(),
-            Movement(Position::default()),
-            CentralEntity,
-        ));
-
-        let _target0 = world.spawn((CellType(CellState::Target), CellPosition::new(0, 0)));
-        let _char = world.spawn((
-            CellType(CellState::SomeChar('4')),
-            CellPosition::new(1, 1),
-            Position::default(),
-            Movement(Position::default()),
-            Velocity(Position::new(0., 1.)),
-        ));
-        let _target1 = world.spawn((
-            CellType(CellState::Target),
-            CellPosition::new(19, 19),
-            Movement(Position::default()),
-        ));
-        let _obstacle = world.spawn((
-            CellType(CellState::Obstacle),
-            CellPosition::new(15, 15),
-            Position::default(),
-            Movement(Position::default()),
-        ));
     }
 }

@@ -20,43 +20,4 @@ impl super::RaaWorld {
 //  //  //  //  //  //  //  //
 #[cfg(test)]
 mod base_test {
-        /*
-    use super::*;
-    use cells_world::*;
-
-    #[test]
-    fn creation() -> eyre::Result<()> {
-        let mut world = World::new();
-        assert!(world.world.len() == 0);
-        invoke_player_input_update(&mut world.world);
-
-        assert!(
-            world.send_to_player(vec![GameInputCommand::OnceUp])
-                == Err(InputSystemError::NoPlayerToSend)
-        );
-        invoke_player_input_update(&mut world.world);
-
-        world
-            .world
-            .spawn((CellType(CellState::Target), Position::from_tuple((0, 0))));
-        assert!(world.world.len() == 1);
-        assert!(
-            world.send_to_player(vec![GameInputCommand::OnceUp])
-                == Err(InputSystemError::NoPlayerToSend)
-        );
-        invoke_player_input_update(&mut world.world);
-
-        world.world.spawn((
-            CellType(CellState::Player),
-            UserInput,
-            player::PlayerInput::new(),
-            Position::from_tuple((7, 7)),
-        ));
-        assert!(world.world.len() == 2);
-        world.send_to_player(vec![GameInputCommand::OnceUp])?;
-        invoke_player_input_update(&mut world.world);
-
-        Ok(())
-    }
-        */
 }
