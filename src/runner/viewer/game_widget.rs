@@ -36,27 +36,27 @@ impl Widget for GameWidget {
 struct GameCellWG(CellState);
 impl Widget for GameCellWG {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let left = Position::new(area.x, area.y);
-        let right = Position::new(area.x + 2, area.y);
         let center = Position::new(area.x + 1, area.y);
+        let left_ = Position::new(area.x + 0, area.y);
+        let right = Position::new(area.x + 2, area.y);
 
         match self.0 {
             CellState::Empty => {
                 buf[center].set_char(' ').set_bg(empty_bg);
-                buf[left].set_char(' ').set_bg(empty_bg);
+                buf[left_].set_char(' ').set_bg(empty_bg);
                 buf[right].set_char(' ').set_bg(empty_bg);
             }
             CellState::RedEmpty => {
                 buf[center].set_char(' ').set_bg(red_empty_bg);
-                buf[left].set_char('-').set_bg(red_empty_bg);
+                buf[left_].set_char('-').set_bg(red_empty_bg);
                 buf[right].set_char('-').set_bg(red_empty_bg);
             }
             CellState::Player => {
                 buf[center]
-                    .set_char('*')
+                    .set_char('+')
                     .set_bg(empty_bg)
                     .set_fg(Color::Green);
-                buf[left].set_char('[').set_bg(empty_bg);
+                buf[left_].set_char('[').set_bg(empty_bg);
                 buf[right].set_char(']').set_bg(empty_bg);
             }
             CellState::Target => {
@@ -64,36 +64,36 @@ impl Widget for GameCellWG {
                     .set_char('#')
                     .set_bg(Color::Black)
                     .set_fg(Color::Red);
-                buf[left].set_char(' ').set_bg(Color::Black);
+                buf[left_].set_char(' ').set_bg(Color::Black);
                 buf[right].set_char(' ').set_bg(Color::Black);
             }
             CellState::Obstacle => {
                 buf[center].set_char(' ').set_bg(obstacle_bg);
-                buf[left].set_char(' ').set_bg(obstacle_bg);
+                buf[left_].set_char(' ').set_bg(obstacle_bg);
                 buf[right].set_char(' ').set_bg(obstacle_bg);
             }
             CellState::SomeChar(ch) => {
-                let char_bg: Color;
+                let char_fg: Color;
                 match ch {
                     '1' => {
-                        char_bg = Color::Rgb(64, 16, 16);
+                        char_fg = Color::Rgb(128, 16, 16);
                     }
                     '2' => {
-                        char_bg = Color::Rgb(64, 64, 0);
+                        char_fg = Color::Rgb(128, 64, 0);
                     }
                     '3' => {
-                        char_bg = Color::Rgb(16, 64, 16);
+                        char_fg = Color::Rgb(16, 128, 16);
                     }
                     '4' => {
-                        char_bg = Color::Rgb(0, 64, 64);
+                        char_fg = Color::Rgb(0, 128, 128);
                     }
                     _ => {
-                        char_bg = Color::Rgb(0, 0, 64);
+                        char_fg = Color::Rgb(0, 0, 128);
                     }
                 }
-                buf[center].set_char(ch).set_bg(char_bg);
-                buf[left].set_char(' ').set_bg(char_bg);
-                buf[right].set_char(' ').set_bg(char_bg);
+                buf[center].set_char(ch).set_fg(char_fg);
+                buf[left_].set_char(' ');//.set_bg(char_bg);
+                buf[right].set_char(' ');//.set_bg(char_bg);
             }
         }
     }

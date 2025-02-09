@@ -1,5 +1,4 @@
 use super::*;
-
 //  //  //  //  //  //  //  //
 pub(crate) fn get_from_first(
     mut candidates: hecs::QueryBorrow<(&CentralEntity, &CellPosition)>,

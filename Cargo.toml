@@ -11,11 +11,13 @@ raalog.workspace = true
 ratatui.workspace = true
 gamepads.workspace = true
 hecs.workspace = true
+num-complex.workspace = true
 
 app_raa_tui = { path = "crates/app_raa_tui" }
 event_handler = { path = "crates/event_handler" }
 gamepad_handler = { path = "crates/gamepad_handler" }
 cells_world = { path = "crates/cells_world" }
+cells_space = { path = "crates/cells_space" }
 hecs_wrapper = { path = "crates/hecs_wrapper" }
 arithm2d = { path = "crates/arithm2d" }
 #ecs_raa = { path = "crates/ecs_raa" }
@@ -28,9 +30,10 @@ members = [
 	"crates/gamepad_handler",
 	"crates/app_raa_tui",
 	"crates/cells_world",
-	#"crates/ecs_raa",
+	"crates/cells_space",
 	"crates/hecs_wrapper",
 	"crates/arithm2d",
+	#"crates/ecs_raa",
 ]
 
 [workspace.dependencies]
@@ -39,3 +42,4 @@ hecs = "0.10.5"
 ratatui = "0.29.0"
 gamepads = "0.1.6"
 raalog = { git = "https://github.com/AlexanderARodin/raalog.git", branch = "main" }
+num-complex = "0.4.6"

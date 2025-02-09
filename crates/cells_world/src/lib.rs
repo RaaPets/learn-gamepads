@@ -1,6 +1,7 @@
 //  //  //  //  //  //  //  //
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Default)]
 pub enum CellState {
+    #[default]
     Empty,
     RedEmpty,
     Player,

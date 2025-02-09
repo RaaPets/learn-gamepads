@@ -6,14 +6,14 @@ use hecs_wrapper::prelude::*;
 pub enum KeyboardInput {
     GameRestart,
     GameInput(GameInputCommand),
-    QuitRequest,
+    GameQuitRequest,
 }
 //  //  //  //  //  //  //  //
 #[derive(Debug)]
 pub enum Action {
     // main
     Noop,
-    Quit,
+    AppQuit,
     Tick,
     TranslateRawEvent(xEvent::Event),
     Keyboard(KeyboardInput),
@@ -21,10 +21,4 @@ pub enum Action {
     // append
     GameInput(Vec<GameInputCommand>, bool),
     ProcessMainGamepadInput(Option<gamepads::Gamepad>),
-
-    /*
-    PopupLuaEditor,
-    QueueCommand(String),
-    Warning(String),
-    */
 }

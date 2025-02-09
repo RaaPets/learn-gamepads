@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use cells_world::*;
+use cells_space::*;
 
 pub(crate) mod central_position;
 mod create_entity;
@@ -10,26 +11,31 @@ mod utils;
 pub struct RaaWorld {
     t: f64,
     pub(crate) world: hecs::World,
+    pub(crate) space: CellsSpace<CellState>,
 }
 
 impl RaaWorld {
     pub fn new() -> Self {
         let world = hecs::World::new();
-        Self { t: 0., world }
+        let space = CellsSpace::new(16,16);
+        Self { t: 0., world, space, }
     }
 
     pub fn update_on_tick(&mut self, delta_time_secs: f64) -> eyre::Result<()> {
         self.t += delta_time_secs;
-        Self::update_world(&mut self.world, delta_time_secs, (self.t * 123.) as u64);
+        Self::update_world(&mut self.world, delta_time_secs);
         Ok(())
     }
 
     #[inline(always)]
-    fn update_world(world: &mut hecs::World, delta_time_secs: f64, rnd: u64) {
+    fn update_world(world: &mut hecs::World, delta_time_secs: f64) {
+        let mut wave_query = hecs::PreparedQuery::<&mut WaveFunction>::default();
+        systems::wave_function::update(wave_query.query_mut(world), delta_time_secs as f32);
+
         let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
         let res_char = systems::player_input::update(input_query.query_mut(world));
 
-        systems::collision::update(world.query_mut::<(&mut Movement, &CellPosition)>(), rnd);
+        systems::collision::update(world.query_mut::<(&mut Movement, &CellPosition, &WaveFunction)>());
 
         systems::velocity::update(
             world.query_mut::<(&mut Movement, &Velocity)>(),
@@ -51,10 +57,14 @@ impl RaaWorld {
         let mut info = String::new();
 
         for ent in self.world.iter() {
+            let mut prob = -1.;
+            if let Some(wave) = ent.get::<&WaveFunction>() {
+                prob = wave.prob();
+            }
             let cell_pos = ent.get::<&CellPosition>();
             let pos = ent.get::<&Position>();
             let e = ent.entity();
-            info += &format!("\n[{}]-> {:?} {:?}", e.id(), cell_pos, pos);
+            info += &format!("\n[{}]-> {} {:?} {:?}", e.id(), prob, cell_pos, pos);
         }
 
         info

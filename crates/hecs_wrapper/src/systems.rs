@@ -8,6 +8,17 @@ pub mod velocity;
 pub mod collision;
 
 //  //  //  //  //  //  //  //
+pub mod wave_function {
+    use super::*;
+
+    pub(crate) fn update(waves: hecs::PreparedQueryIter<&mut WaveFunction>, dfaze: f32) {
+        for (_id, wave) in waves {
+            wave.evo(dfaze);
+        }
+    }
+}
+
+//  //  //  //  //  //  //  //
 pub mod position_to_cell {
     use super::*;
 

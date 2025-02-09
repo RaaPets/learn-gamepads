@@ -24,7 +24,7 @@ pub fn execute(
 
     let mut app_state = AppState::JustInited;
 
-    let mut debug_text = String::new();
+    let mut debug_text;
     while !&app_state.is_exiting() {
         if let AppState::Working(w) = &app_state {
             debug_text = w.world.debug_info();
@@ -55,7 +55,7 @@ pub fn execute(
                 app_state = invoke_update_loop(app_state, Action::Tick)?;
             }
             event_handler::Events::Exit => {
-                app_state = invoke_update_loop(app_state, Action::Quit)?;
+                app_state = invoke_update_loop(app_state, Action::AppQuit)?;
             }
         }
     }

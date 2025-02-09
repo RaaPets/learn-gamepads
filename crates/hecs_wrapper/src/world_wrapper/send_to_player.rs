@@ -14,10 +14,3 @@ impl super::RaaWorld {
         Err(InputSystemError::NoPlayerToSend)
     }
 }
-
-//  //  //  //  //  //  //  //
-//        TEST              //
-//  //  //  //  //  //  //  //
-#[cfg(test)]
-mod base_test {
-}

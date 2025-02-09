@@ -70,9 +70,9 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
             }
         }
         (Working(mut work_state), Keyboard(kbd)) => match kbd {
-            KeyboardInput::QuitRequest => {
+            KeyboardInput::GameQuitRequest => {
                 let new_state = Working(work_state);
-                return Ok((new_state, Quit));
+                return Ok((new_state, AppQuit));
             }
             KeyboardInput::GameRestart => {
                 return Ok((JustInited, Noop));
@@ -87,7 +87,7 @@ pub fn update(state: AppState, with_action: Action) -> Result<(AppState, Action)
                 return Ok((new_state, Noop));
             }
         },
-        (_, Quit) => {
+        (_, AppQuit) => {
             return Ok((Exiting, Noop));
         }
         (state_out, _) => {
@@ -129,7 +129,7 @@ fn translate_keyboard(event: xEvent::Event) -> Option<KeyboardInput> {
     if let xEvent::Event::Key(key) = event {
         match key.code {
             xEvent::KeyCode::Char('q') => {
-                return Some(KeyboardInput::QuitRequest);
+                return Some(KeyboardInput::GameQuitRequest);
             }
 
             xEvent::KeyCode::Char('r') => {
