@@ -10,7 +10,8 @@ impl super::RaaWorld {
         Self::spawn_player(world, (7, 7));
         Self::spawn_target(world, (0, 0));
         Self::spawn_char(world, '4', (1, 1));
-        Self::spawn_target(world, (19, 19));
+        Self::spawn_target(world, (9, 1));
+        Self::spawn_obstacle(world, (15, 15));
         Self::spawn_obstacle(world, (15, 15));
     }
 

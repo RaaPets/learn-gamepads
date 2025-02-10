@@ -8,6 +8,34 @@ pub mod velocity;
 pub mod collision;
 
 //  //  //  //  //  //  //  //
+pub mod pos_to_space {
+    use super::*;
+    use crate::world_wrapper::EntityCell;
+    use cells_space::CellsSpace;
+
+    pub(crate) fn update(
+        space: &mut CellsSpace<EntityCell>,
+        mut cposes: hecs::PreparedQueryIter<&CellPosition>,
+    ) {
+        space.clear();
+        for (id, pos) in cposes {
+            let s_pos = pos.into_tuple::<isize>();
+            match &mut space[s_pos] {
+                EntityCell::Empty => {
+                    space[pos.into_tuple::<isize>()] = EntityCell::Entity(id);
+                },
+                EntityCell::Entity(ent_root)=> {
+                    space[pos.into_tuple::<isize>()] = EntityCell::EntityAnd(*ent_root, vec![id]);
+                },
+                EntityCell::EntityAnd(_, appends)=> {
+                    appends.push(id)
+                },
+            }
+        }
+    }
+}
+
+//  //  //  //  //  //  //  //
 pub mod wave_function {
     use super::*;
 
@@ -207,6 +235,9 @@ pub mod position_to_cell {
 }
 
 //  //  //  //  //  //  //  //
+use arithm2d::pos2d::Pos2D;
+const fix_centr: Pos2D<isize> = Pos2D{ x: 7, y: 7 };
+
 pub mod center_on_position {
     use super::*;
 
@@ -217,6 +248,7 @@ pub mod center_on_position {
         if let Some(central_cell) = position {
             for (_id, cell_pos) in positions {
                 *cell_pos -= central_cell;
+                *cell_pos += fix_centr;
             }
         }
     }

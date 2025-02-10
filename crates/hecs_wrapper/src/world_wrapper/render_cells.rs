@@ -3,19 +3,24 @@ use std::rc::Rc;
 //  //  //  //  //  //  //  //
 impl super::RaaWorld {
     pub fn render_cells(&self, width: isize, height: isize) -> Option<Rc<CellsWorld>> {
-        let half_width = width / 2 - 1;
-        let half_height = height / 2 - 1;
         let mut cells = CellsWorld::new(width as usize, height as usize);
-
-        let mut visuals = self.world.query::<(&CellType, &CellPosition)>();
-        for (_id, (cell_type, cell_pos)) in visuals.iter() {
-            let CellPosition { x: i, y: j } =
-                *cell_pos + CellPosition::new(half_width, half_height);
-            if i >= 0 && i < width && j >= 0 && j < height {
-                cells[(i, j)] = cell_type.0;
+        for i in 0..width {
+            for j in 0..height {
+                cells[(i, j)] = match self.space[(i, j)] {
+                    EntityCell::Empty => CellState::Empty,
+                    EntityCell::Entity(ent) => ent_cell_state(&self.world, ent),
+                    EntityCell::EntityAnd(ent, _) => CellState::RedEmpty,//ent_cell_state(&self.world, ent),
+                };
             }
         }
 
         Some(Rc::new(cells))
+    }
+}
+
+fn ent_cell_state(world: &hecs::World, ent: hecs::Entity) -> CellState {
+    match world.get::<&CellType>(ent) {
+        Ok(ctype) => ctype.0,
+        _ => CellState::RedEmpty,
     }
 }

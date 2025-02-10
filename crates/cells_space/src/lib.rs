@@ -15,6 +15,14 @@ impl<T: Default + Clone> CellsSpace<T> {
         }
     }
 
+    pub fn clear(&mut self) {
+        for row in self.cells2d.iter_mut() {
+            for item in row.iter_mut() {
+                *item = T::default();
+            }
+        }
+    }
+
     fn normalize_ij(&self, ij: (isize, isize)) -> (usize, usize) {
         let (src_i, src_j) = ij;
         let mut i = src_i % self.width as isize;

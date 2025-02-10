@@ -15,7 +15,7 @@ pub fn view(debug_text: &str, app_state: &AppState, area: Rect, buf: &mut Buffer
 
     {
         let [game_area, debug_info_area] =
-            Layout::horizontal([Min(35), Min(1)]).areas(all_game_area);
+            Layout::horizontal([Min(35), Max(50)]).areas(all_game_area);
 
         if let AppState::Working(working) = app_state {
             let cells = working.world.render_cells(16, 16);

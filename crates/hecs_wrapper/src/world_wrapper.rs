@@ -1,6 +1,6 @@
 use crate::prelude::*;
-use cells_world::*;
 use cells_space::*;
+use cells_world::*;
 
 pub(crate) mod central_position;
 mod create_entity;
@@ -8,22 +8,39 @@ mod render_cells;
 mod send_to_player;
 mod utils;
 //  //  //  //  //  //  //  //
+#[derive(Debug, Default, Clone)]
+pub enum EntityCell {
+    #[default]
+    Empty,
+    Entity(hecs::Entity),
+    EntityAnd(hecs::Entity, Vec<hecs::Entity>),
+}
+
 pub struct RaaWorld {
     t: f64,
     pub(crate) world: hecs::World,
-    pub(crate) space: CellsSpace<CellState>,
+    pub(crate) space: CellsSpace<EntityCell>,
 }
 
 impl RaaWorld {
     pub fn new() -> Self {
         let world = hecs::World::new();
-        let space = CellsSpace::new(16,16);
-        Self { t: 0., world, space, }
+        let space = CellsSpace::new(16, 16);
+        Self {
+            t: 0.,
+            world,
+            space,
+        }
     }
 
     pub fn update_on_tick(&mut self, delta_time_secs: f64) -> eyre::Result<()> {
         self.t += delta_time_secs;
+
         Self::update_world(&mut self.world, delta_time_secs);
+
+        let mut cpos_query = hecs::PreparedQuery::<&CellPosition>::new();
+        systems::pos_to_space::update(&mut self.space, cpos_query.query_mut(&mut self.world));
+
         Ok(())
     }
 
