@@ -15,6 +15,25 @@ impl std::fmt::Debug for RaaWorld {
     }
 }
 
+impl super::RaaWorld {
+    pub fn debug_info(&self) -> String {
+        let mut info = String::new();
+
+        for ent in self.world.iter() {
+            let mut prob = -1.;
+            if let Some(wave) = ent.get::<&WaveFunction>() {
+                prob = wave.prob();
+            }
+            let cell_pos = ent.get::<&CellPosition>();
+            let pos = ent.get::<&Position>();
+            let e = ent.entity();
+            info += &format!("\n[{}]-> {} {:?} {:?}", e.id(), prob, cell_pos, pos);
+        }
+
+        info
+    }
+}
+
 //  //  //  //  //  //  //  //
 //        TEST              //
 //  //  //  //  //  //  //  //

@@ -15,7 +15,7 @@ pub mod pos_to_space {
 
     pub(crate) fn update(
         space: &mut CellsSpace<EntityCell>,
-        mut cposes: hecs::PreparedQueryIter<&CellPosition>,
+        cposes: hecs::PreparedQueryIter<&CellPosition>,
     ) {
         space.clear();
         for (id, pos) in cposes {

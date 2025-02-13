@@ -6,10 +6,10 @@ impl super::RaaWorld {
         let mut cells = CellsWorld::new(width as usize, height as usize);
         for i in 0..width {
             for j in 0..height {
-                cells[(i, j)] = match self.space[(i, j)] {
+                cells[(i, j)] = match &self.space[(i, j)] {
                     EntityCell::Empty => CellState::Empty,
-                    EntityCell::Entity(ent) => ent_cell_state(&self.world, ent),
-                    EntityCell::EntityAnd(ent, _) => CellState::RedEmpty,//ent_cell_state(&self.world, ent),
+                    EntityCell::Entity(ent) => ent_cell_state(&self.world, *ent),
+                    EntityCell::EntityAnd(_ent, _) => CellState::RedEmpty,//ent_cell_state(&self.world, ent),
                 };
             }
         }

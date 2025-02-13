@@ -35,24 +35,30 @@ impl RaaWorld {
 
     pub fn update_on_tick(&mut self, delta_time_secs: f64) -> eyre::Result<()> {
         self.t += delta_time_secs;
-
-        Self::update_world(&mut self.world, delta_time_secs);
-
-        let mut cpos_query = hecs::PreparedQuery::<&CellPosition>::new();
-        systems::pos_to_space::update(&mut self.space, cpos_query.query_mut(&mut self.world));
-
+        Self::update_world(&mut self.world, &mut self.space, delta_time_secs);
         Ok(())
     }
 
     #[inline(always)]
-    fn update_world(world: &mut hecs::World, delta_time_secs: f64) {
+    fn update_world(
+        world: &mut hecs::World,
+        space: &mut CellsSpace<EntityCell>,
+        delta_time_secs: f64,
+    ) {
         let mut wave_query = hecs::PreparedQuery::<&mut WaveFunction>::default();
         systems::wave_function::update(wave_query.query_mut(world), delta_time_secs as f32);
 
-        let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
-        let res_char = systems::player_input::update(input_query.query_mut(world));
+        let res_char = {
+            let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
+            systems::player_input::update(input_query.query_mut(world))
+        };
 
-        systems::collision::update(world.query_mut::<(&mut Movement, &CellPosition, &WaveFunction)>());
+        let mut cpos_query = hecs::PreparedQuery::<&CellPosition>::new();
+        systems::pos_to_space::update(space, cpos_query.query_mut(world));
+
+        systems::collision::update(
+            world.query_mut::<(&mut Movement, &CellPosition, &WaveFunction)>(),
+        );
 
         systems::velocity::update(
             world.query_mut::<(&mut Movement, &Velocity)>(),
@@ -62,28 +68,13 @@ impl RaaWorld {
 
         systems::position_to_cell::update(world.query_mut::<(&mut CellPosition, &mut Position)>());
 
-        let central_cell =
-            central_position::get_from_first(world.query::<(&CentralEntity, &CellPosition)>());
+        let central_pos_query = world.query::<(&CentralEntity, &CellPosition)>();
+        let central_cell = central_position::get_from_first(central_pos_query);
         systems::center_on_position::update(world.query_mut::<&mut CellPosition>(), central_cell);
+
         if let Some(ch) = res_char {
-            Self::spawn_char(world, ch, (0, -1));
+            Self::spawn_char(world, ch, (7, 6));
         }
-    }
-
-    pub fn debug_info(&self) -> String {
-        let mut info = String::new();
-
-        for ent in self.world.iter() {
-            let mut prob = -1.;
-            if let Some(wave) = ent.get::<&WaveFunction>() {
-                prob = wave.prob();
-            }
-            let cell_pos = ent.get::<&CellPosition>();
-            let pos = ent.get::<&Position>();
-            let e = ent.entity();
-            info += &format!("\n[{}]-> {} {:?} {:?}", e.id(), prob, cell_pos, pos);
-        }
-
-        info
+        systems::pos_to_space::update(space, cpos_query.query_mut(world));
     }
 }
