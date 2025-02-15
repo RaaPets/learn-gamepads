@@ -1,4 +1,3 @@
-use ratatui::layout::Flex;
 use ratatui::prelude::*;
 use ratatui::widgets::*;
 use std::rc::Rc;
@@ -11,13 +10,13 @@ mod game_widget;
 
 //  //  //  //  //  //  //  //
 pub fn view(debug_text: &str, app_state: &AppState, area: Rect, buf: &mut Buffer) {
-    let [_top_area, all_game_area, status_area] =
-        Layout::vertical([Length(1), Min(35), Min(4)]).areas(area);
+    let [top_area, all_game_area, status_area] =
+        Layout::vertical([Max(1), Min(35), Min(1)]).areas(area);
 
+    Paragraph::new("Press Q to exit while there is no a gampade connected.").render(top_area, buf);
     {
         let [game_area, debug_info_area] =
-            Layout::horizontal([Length(35), Fill(1)]).areas(all_game_area);
-
+            Layout::horizontal([Min(35), Max(555)]).flex(layout::Flex::Start).areas(all_game_area);
         if let AppState::Working(working) = app_state {
             let cells = working.world.render_cells(16, 16);
             PlaygroundWidget(cells).render(game_area, buf);

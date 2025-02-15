@@ -5,10 +5,12 @@ impl super::RaaWorld {
         let mut info = String::new();
 
         for ent in self.world.iter() {
+            /*
             let mut prob = -1.;
             if let Some(wave) = ent.get::<&WaveFunction>() {
                 prob = wave.prob();
             }
+            */
             let cell_pos = ent.get::<&CellPosition>();
             let velo = ent.get::<&Velocity>().map(|v| v.0);
             let pos = ent.get::<&Position>();
