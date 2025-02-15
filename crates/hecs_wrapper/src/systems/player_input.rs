@@ -2,10 +2,10 @@ use super::*;
 use player::GameInputCommand;
 
 //  //  //  //  //  //  //  //
-pub(crate) fn update(players: hecs::PreparedQueryIter<(&mut Position, &mut PlayerInput)>) -> Option<char> {
+pub(crate) fn update(players: hecs::PreparedQueryIter<(&mut Velocity, &mut PlayerInput)>) -> Option<char> {
     let mut res_char = None;
 
-    for (_id, (position, input)) in players {
+    for (_id, (velocity, input)) in players {
         let mut di = 0.;
         let mut dj = 0.;
         let mut last_ch = None;
@@ -24,7 +24,7 @@ pub(crate) fn update(players: hecs::PreparedQueryIter<(&mut Position, &mut Playe
                 }
             }
         }
-        *position += Position::new(di, dj);
+        velocity.0 += Position::new(di, dj);
         if res_char.is_none() {
             res_char = last_ch;
         }
@@ -41,7 +41,7 @@ mod player_input_test {
     use super::*;
 
     fn invoke_update(world: &mut hecs::World) -> Option<char> {
-        let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
+        let mut input_query = hecs::PreparedQuery::<(&mut Velocity, &mut PlayerInput)>::default();
         update(input_query.query_mut(world))
     }
 

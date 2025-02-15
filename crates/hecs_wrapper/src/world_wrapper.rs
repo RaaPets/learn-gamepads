@@ -49,7 +49,7 @@ impl RaaWorld {
         systems::wave_function::update(wave_query.query_mut(world), delta_time_secs as f32);
 
         let res_char = {
-            let mut input_query = hecs::PreparedQuery::<(&mut Position, &mut PlayerInput)>::default();
+            let mut input_query = hecs::PreparedQuery::<(&mut Velocity, &mut PlayerInput)>::default();
             systems::player_input::update(input_query.query_mut(world))
         };
 

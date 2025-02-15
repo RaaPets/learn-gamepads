@@ -1,5 +1,25 @@
 use super::*;
 //  //  //  //  //  //  //  //
+impl super::RaaWorld {
+    pub fn debug_info(&self) -> String {
+        let mut info = String::new();
+
+        for ent in self.world.iter() {
+            let mut prob = -1.;
+            if let Some(wave) = ent.get::<&WaveFunction>() {
+                prob = wave.prob();
+            }
+            let cell_pos = ent.get::<&CellPosition>();
+            let velo = ent.get::<&Velocity>().map(|v| v.0);
+            let pos = ent.get::<&Position>();
+            let e = ent.entity();
+            info += &format!("\n[{}]-> {:?} {:?} {:?}", e.id(), velo, cell_pos, pos);
+        }
+
+        info
+    }
+}
+
 impl PartialEq for RaaWorld {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(self, other)
@@ -12,25 +32,6 @@ impl std::fmt::Debug for RaaWorld {
             1 => write!(f, "there is 1 entity"),
             n => write!(f, "there are {} entities", n),
         }
-    }
-}
-
-impl super::RaaWorld {
-    pub fn debug_info(&self) -> String {
-        let mut info = String::new();
-
-        for ent in self.world.iter() {
-            let mut prob = -1.;
-            if let Some(wave) = ent.get::<&WaveFunction>() {
-                prob = wave.prob();
-            }
-            let cell_pos = ent.get::<&CellPosition>();
-            let pos = ent.get::<&Position>();
-            let e = ent.entity();
-            info += &format!("\n[{}]-> {} {:?} {:?}", e.id(), prob, cell_pos, pos);
-        }
-
-        info
     }
 }
 

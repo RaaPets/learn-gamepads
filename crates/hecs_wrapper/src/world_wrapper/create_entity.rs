@@ -21,6 +21,7 @@ impl super::RaaWorld {
             CellType(CellState::Player),
             player::PlayerInput::new(),
             CentralEntity,
+            Velocity(Position::default()),
         ));
         Self::insert_location_components(world, ent, pos);
     }

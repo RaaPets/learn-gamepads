@@ -236,7 +236,7 @@ pub mod position_to_cell {
 
 //  //  //  //  //  //  //  //
 use arithm2d::pos2d::Pos2D;
-const fix_centr: Pos2D<isize> = Pos2D{ x: 7, y: 7 };
+const FIX_CENTER: Pos2D<isize> = Pos2D{ x: 7, y: 7 };
 
 pub mod center_on_position {
     use super::*;
@@ -248,7 +248,7 @@ pub mod center_on_position {
         if let Some(central_cell) = position {
             for (_id, cell_pos) in positions {
                 *cell_pos -= central_cell;
-                *cell_pos += fix_centr;
+                *cell_pos += FIX_CENTER;
             }
         }
     }
