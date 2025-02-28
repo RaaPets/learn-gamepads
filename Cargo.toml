@@ -43,3 +43,4 @@ ratatui = "0.29.0"
 gamepads = "0.1.6"
 raalog = { git = "https://github.com/AlexanderARodin/raalog.git", branch = "main" }
 num-complex = "0.4.6"
+
